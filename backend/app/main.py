@@ -36,6 +36,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    if settings is not None:
+        app.dependency_overrides[get_settings] = lambda: resolved_settings
+
     app.include_router(router, prefix="/api")
     return app
 

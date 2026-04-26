@@ -17,10 +17,12 @@ class DomainRoute(StrEnum):
 
 
 class EvidenceType(StrEnum):
-    exact_evidence = "exact_evidence"
-    adjacent_evidence = "adjacent_evidence"
-    generic_protocol_evidence = "generic_protocol_evidence"
-    supplier_evidence = "supplier_evidence"
+    exact_match = "exact_match"
+    close_match = "close_match"
+    adjacent_method = "adjacent_method"
+    generic_method = "generic_method"
+    supplier_reference = "supplier_reference"
+    safety_or_standard = "safety_or_standard"
     assumption = "assumption"
 
 
@@ -28,7 +30,14 @@ class TrustTier(StrEnum):
     literature_database = "literature_database"
     supplier_documentation = "supplier_documentation"
     community_protocol = "community_protocol"
+    scientific_standard = "scientific_standard"
     inferred = "inferred"
+
+
+class TrustLevel(StrEnum):
+    high = "high"
+    medium = "medium"
+    low = "low"
 
 
 class ProcurementStatus(StrEnum):
@@ -65,14 +74,43 @@ class ParsedHypothesis(StrictModel):
     original_text: str
     domain: str
     domain_route: DomainRoute
-    organism_or_system: str | None
+    scientific_system: str | None
+    model_or_organism: str | None
     intervention: str | None
     comparator: str | None
-    outcome: str | None
-    effect_size: str | None
+    outcome_metric: str | None
+    success_threshold: str | None
     mechanism: str | None
-    key_terms: list[str]
+    literature_query_terms: list[str]
+    protocol_query_terms: list[str]
+    supplier_material_query_terms: list[str]
+    organism_or_system: str | None = None
+    outcome: str | None = None
+    effect_size: str | None = None
+    key_terms: list[str] = Field(default_factory=list)
     safety_notes: list[str]
+
+    @model_validator(mode="after")
+    def derive_compatibility_fields(self) -> "ParsedHypothesis":
+        if self.organism_or_system is None:
+            self.organism_or_system = self.model_or_organism or self.scientific_system
+        if self.outcome is None:
+            self.outcome = self.outcome_metric
+        if self.effect_size is None:
+            self.effect_size = self.success_threshold
+        if not self.key_terms:
+            ordered_terms = [
+                *(self.literature_query_terms or []),
+                *(self.protocol_query_terms or []),
+                *(self.supplier_material_query_terms or []),
+            ]
+            deduped: list[str] = []
+            for term in ordered_terms:
+                cleaned = term.strip()
+                if cleaned and cleaned not in deduped:
+                    deduped.append(cleaned)
+            self.key_terms = deduped[:12]
+        return self
 
 
 class EvidenceSource(StrictModel):
@@ -82,6 +120,7 @@ class EvidenceSource(StrictModel):
     url: str | None
     evidence_type: EvidenceType
     trust_tier: TrustTier
+    trust_level: TrustLevel
     snippet: str
     authors: list[str]
     year: int | None
@@ -90,20 +129,47 @@ class EvidenceSource(StrictModel):
     retrieved_at: datetime
 
 
+class ProviderTraceEntry(StrictModel):
+    provider: str
+    attempted: bool
+    succeeded: bool
+    cached: bool = False
+    query: str
+    result_count: int = Field(ge=0)
+    error: str | None = None
+
+
 class LiteratureQC(StrictModel):
     novelty_signal: NoveltySignal
     confidence: float = Field(ge=0.0, le=1.0)
     references: list[EvidenceSource] = Field(max_length=3)
+    literature_sources: list[EvidenceSource] = Field(default_factory=list)
     searched_sources: list[str]
+    provider_trace: list[ProviderTraceEntry] = Field(default_factory=list)
     rationale: str
-    evidence_gap_warnings: list[str]
+    literature_synthesis: str | None = None
+    gaps: list[str] = Field(default_factory=list)
+    evidence_gap_warnings: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def sync_gap_fields(self) -> "LiteratureQC":
+        if not self.gaps and self.evidence_gap_warnings:
+            self.gaps = list(self.evidence_gap_warnings)
+        if not self.evidence_gap_warnings and self.gaps:
+            self.evidence_gap_warnings = list(self.gaps)
+        if not self.literature_sources:
+            self.literature_sources = list(self.references)
+        return self
 
 
 class EvidencePack(StrictModel):
     domain_route: DomainRoute
     sources: list[EvidenceSource]
     searched_providers: list[str]
+    provider_trace: list[ProviderTraceEntry] = Field(default_factory=list)
     evidence_gap_warnings: list[str]
+    literature_synthesis: str | None = None
+    checklists: list[EvidenceSource] = Field(default_factory=list)
     used_seed_data: bool
     confidence_summary: float = Field(ge=0.0, le=1.0)
 

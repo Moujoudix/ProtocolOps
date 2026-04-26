@@ -13,6 +13,8 @@ from app.models.schemas import (
     PriceStatus,
     ProcurementStatus,
     ProtocolStep,
+    ProviderTraceEntry,
+    TrustLevel,
     TrustTier,
     now_utc,
 )
@@ -33,8 +35,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="Seeded literature evidence",
             title="Trehalose as an adjacent cryoprotection and membrane-stabilization evidence source",
             url=None,
-            evidence_type=EvidenceType.adjacent_evidence,
+            evidence_type=EvidenceType.close_match,
             trust_tier=TrustTier.inferred,
+            trust_level=TrustLevel.low,
             snippet=(
                 "Adjacent literature supports trehalose as a cryoprotection-relevant disaccharide and "
                 "membrane stabilizer, but this seed does not establish an exact HeLa head-to-head result."
@@ -50,8 +53,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="ATCC",
             title="ATCC HeLa cell line product page (CCL-2)",
             url="https://www.atcc.org/products/ccl-2",
-            evidence_type=EvidenceType.supplier_evidence,
+            evidence_type=EvidenceType.supplier_reference,
             trust_tier=TrustTier.supplier_documentation,
+            trust_level=TrustLevel.high,
             snippet=(
                 "Supplier documentation for the HeLa cell model. The validated catalog fact for this preset is "
                 "ATCC CCL-2."
@@ -67,8 +71,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="Thermo Fisher Scientific / Gibco",
             title="Gibco cell-freezing protocol guidance",
             url="https://www.thermofisher.com/us/en/home/references/gibco-cell-culture-basics/cell-culture-protocols/freezing-cells.html",
-            evidence_type=EvidenceType.generic_protocol_evidence,
+            evidence_type=EvidenceType.supplier_reference,
             trust_tier=TrustTier.supplier_documentation,
+            trust_level=TrustLevel.high,
             snippet=(
                 "Generic mammalian cell freezing guidance supports using an established controlled freezing "
                 "and thawing workflow as the comparator protocol backbone."
@@ -84,8 +89,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="Promega",
             title="Promega CellTiter-Glo viability assay guidance",
             url="https://www.promega.com/resources/guides/cell-biology/cell-viability-assays/",
-            evidence_type=EvidenceType.supplier_evidence,
+            evidence_type=EvidenceType.supplier_reference,
             trust_tier=TrustTier.supplier_documentation,
+            trust_level=TrustLevel.high,
             snippet=(
                 "Supplier evidence for CellTiter-Glo as a post-thaw viability measurement option for this demo path."
             ),
@@ -100,8 +106,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="Sigma-Aldrich",
             title="Trehalose supplier context",
             url="https://www.sigmaaldrich.com/US/en/search/trehalose",
-            evidence_type=EvidenceType.supplier_evidence,
+            evidence_type=EvidenceType.supplier_reference,
             trust_tier=TrustTier.supplier_documentation,
+            trust_level=TrustLevel.medium,
             snippet=(
                 "Supplier context indicates trehalose is commercially available; exact catalog numbers and "
                 "prices must be checked live before procurement."
@@ -117,8 +124,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="protocols.io fallback",
             title="Community cryopreservation protocol scaffold",
             url="https://www.protocols.io/",
-            evidence_type=EvidenceType.generic_protocol_evidence,
+            evidence_type=EvidenceType.generic_method,
             trust_tier=TrustTier.community_protocol,
+            trust_level=TrustLevel.low,
             snippet=(
                 "Community protocol evidence can support procedural scaffolding, but it should not be treated "
                 "as an exact validated HeLa trehalose SOP."
@@ -134,8 +142,9 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             source_name="OpenWetWare fallback",
             title="Community wet-lab workflow scaffold",
             url="https://openwetware.org/wiki/Main_Page",
-            evidence_type=EvidenceType.generic_protocol_evidence,
+            evidence_type=EvidenceType.generic_method,
             trust_tier=TrustTier.community_protocol,
+            trust_level=TrustLevel.low,
             snippet=(
                 "Community wet-lab sources can provide procedural structure but remain expert-review-required "
                 "for exact parameters."
@@ -153,6 +162,7 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             url=None,
             evidence_type=EvidenceType.assumption,
             trust_tier=TrustTier.inferred,
+            trust_level=TrustLevel.low,
             snippet=(
                 "Treatment concentrations, freeze/thaw parameters, replicate count, and acceptance criteria "
                 "must be approved by a qualified scientist before lab execution."
@@ -171,13 +181,30 @@ def seeded_hela_parsed(hypothesis: str) -> ParsedHypothesis:
         original_text=hypothesis,
         domain="cell biology / cryopreservation",
         domain_route=DomainRoute.cell_biology,
-        organism_or_system="HeLa cells",
+        scientific_system="mammalian cell cryopreservation",
+        model_or_organism="HeLa cells",
         intervention="trehalose-containing freezing medium",
         comparator="standard DMSO cryopreservation protocol",
-        outcome="post-thaw viability increase of at least 15 percentage points",
-        effect_size=">= 15 percentage points",
+        outcome_metric="post-thaw viability",
+        success_threshold=">= 15 percentage points versus standard DMSO protocol",
         mechanism="membrane stabilization at low temperatures",
-        key_terms=["HeLa", "trehalose", "cryopreservation", "DMSO", "post-thaw viability"],
+        literature_query_terms=[
+            "trehalose HeLa cryopreservation viability DMSO",
+            "trehalose mammalian cell cryopreservation post-thaw viability",
+            "HeLa cryopreservation DMSO post-thaw viability",
+        ],
+        protocol_query_terms=[
+            "cell freezing",
+            "cryopreservation",
+            "DMSO cell freezing",
+            "cell thawing",
+            "post-thaw viability",
+        ],
+        supplier_material_query_terms=[
+            "ATCC CCL-2 HeLa",
+            "CellTiter-Glo",
+            "trehalose product page",
+        ],
         safety_notes=[
             "Use authenticated, contamination-tested cell stocks and institutional biosafety practices.",
             "Treat all wet-lab details as expert-review-required before execution.",
@@ -191,12 +218,19 @@ def seeded_hela_literature_qc() -> LiteratureQC:
         novelty_signal=NoveltySignal.similar_work_exists,
         confidence=0.71,
         references=sources[:3],
+        literature_sources=sources,
         searched_sources=["Semantic Scholar", "Europe PMC", "HeLa demo seed"],
+        provider_trace=[],
         rationale=(
             "Searched sources indicate adjacent cryoprotection evidence for trehalose and generic HeLa or "
             "mammalian cell cryopreservation evidence. An exact HeLa trehalose-vs-standard-DMSO head-to-head "
             "claim was not confirmed in the searched sources."
         ),
+        literature_synthesis="Seeded HeLa literature evidence supports adjacent cryoprotection rationale and supplier-backed demo references.",
+        gaps=[
+            "Use 'not found in searched sources' rather than claiming the experiment has never been done.",
+            "Exact trehalose concentration, freezing rate, thaw timing, and replicate count require expert review.",
+        ],
         evidence_gap_warnings=[
             "Use 'not found in searched sources' rather than claiming the experiment has never been done.",
             "Exact trehalose concentration, freezing rate, thaw timing, and replicate count require expert review.",

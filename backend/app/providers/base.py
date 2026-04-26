@@ -11,9 +11,14 @@ class SearchContext:
     stage: str
 
 
+@dataclass(frozen=True)
+class ProviderSearchResult:
+    sources: list[EvidenceSource]
+    literature_synthesis: str | None = None
+
+
 class SourceProvider(Protocol):
     name: str
 
-    async def search(self, query: str, context: SearchContext) -> list[EvidenceSource]:
+    async def search(self, query: str, context: SearchContext) -> ProviderSearchResult:
         ...
-

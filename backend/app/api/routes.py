@@ -41,7 +41,7 @@ async def create_literature_qc(
     parser = OpenAIStructuredClient(settings)
     parsed = await parser.parse_hypothesis(request.hypothesis, preset_id=request.preset_id)
     context = SearchContext(parsed_hypothesis=parsed, preset_id=request.preset_id, stage="literature_qc")
-    literature_qc = await LiteratureQcService(settings).run(context)
+    literature_qc = await LiteratureQcService(settings).run(context, session=session)
 
     run = Run(
         id=str(uuid4()),

@@ -18,3 +18,11 @@ class Run(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 
+
+class ConsensusCache(SQLModel, table=True):
+    normalized_hypothesis: str = Field(primary_key=True)
+    query: str
+    references_json: str
+    literature_synthesis: str | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)

@@ -15,6 +15,7 @@ from app.models.schemas import (
     PriceStatus,
     ProcurementStatus,
     ProtocolStep,
+    TrustLevel,
     TrustTier,
     now_utc,
 )
@@ -52,9 +53,11 @@ class OpenAIStructuredClient:
                     {
                         "role": "system",
                         "content": (
-                            "Extract a scientific hypothesis into structured fields. Keep uncertain fields null. "
-                            "Return concise key terms for evidence retrieval. Set domain_route to one of: "
-                            "cell_biology, diagnostics_biosensor, animal_gut_health, microbial_electrochemistry. "
+                            "Extract a scientific hypothesis into structured fields for a scientific planning app. "
+                            "Keep uncertain fields null. Set domain_route to one of: cell_biology, "
+                            "diagnostics_biosensor, animal_gut_health, microbial_electrochemistry. "
+                            "Return separate literature_query_terms, protocol_query_terms, and "
+                            "supplier_material_query_terms. Do not call or mention outside providers. "
                             "JSON must match the schema."
                         ),
                     },
@@ -125,8 +128,8 @@ def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evi
         f"Evidence sources:\n{evidence_json}\n\n"
         "Required guardrails:\n"
         "- Use 'not found in searched sources'; do not say a hypothesis has never been done.\n"
-        "- Distinguish exact, adjacent, generic protocol, supplier, and assumption evidence.\n"
-        "- Treat trust tiers as literature_database, supplier_documentation, community_protocol, or inferred.\n"
+        "- Distinguish exact_match, close_match, adjacent_method, generic_method, supplier_reference, safety_or_standard, and assumption evidence.\n"
+        "- Treat trust_tier as provenance and trust_level as high, medium, or low.\n"
         "- Every protocol step needs evidence_source_ids, confidence, and expert_review_required.\n"
         "- Leave catalog_number, price, and currency null unless directly retrieved.\n"
         "- Use procurement_status and price_status conservatively.\n"
@@ -136,28 +139,33 @@ def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evi
 
 def heuristic_parse_hypothesis(hypothesis: str, preset_id: str | None = None) -> ParsedHypothesis:
     domain_route = resolve_domain_route(hypothesis, preset_id)
+    model_or_organism = _first_present(
+        hypothesis,
+        ["HeLa cells", "whole blood", "C57BL/6 mice", "Sporomusa ovata", "Lactobacillus rhamnosus GG"],
+    )
+    outcome_metric = _first_present(
+        hypothesis,
+        ["post-thaw viability", "C-reactive protein", "intestinal permeability", "acetate", "CO2 into acetate"],
+    )
     return ParsedHypothesis(
         original_text=hypothesis,
         domain=domain_label_for_route(domain_route),
         domain_route=domain_route,
-        organism_or_system=_first_present(
-            hypothesis,
-            ["HeLa cells", "whole blood", "C57BL/6 mice", "Sporomusa ovata", "bioelectrochemical system"],
-        ),
+        scientific_system=_default_scientific_system(domain_route),
+        model_or_organism=model_or_organism,
         intervention=_phrase_after(hypothesis, ["Replacing", "Supplementing", "Introducing", "functionalized with"]),
         comparator=_phrase_after(hypothesis, ["compared to", "matching", "outperforming"]),
-        outcome=_first_present(
-            hypothesis,
-            ["post-thaw viability", "C-reactive protein", "intestinal permeability", "CO2 into acetate"],
-        ),
-        effect_size=_first_present(hypothesis, ["15 percentage points", "0.5 mg/L", "30%", "150 mmol/L/day", "20%"]),
+        outcome_metric=outcome_metric,
+        success_threshold=_first_present(hypothesis, ["15 percentage points", "0.5 mg/L", "30%", "150 mmol/L/day", "20%"]),
         mechanism=_phrase_after(hypothesis, ["due to"]),
-        key_terms=derive_key_terms(hypothesis),
+        literature_query_terms=derive_query_terms(hypothesis, domain_route, "literature"),
+        protocol_query_terms=derive_query_terms(hypothesis, domain_route, "protocol"),
+        supplier_material_query_terms=derive_query_terms(hypothesis, domain_route, "supplier"),
         safety_notes=["Review all inferred wet-lab details with a qualified scientist before execution."],
     )
 
 
-def derive_key_terms(text: str) -> list[str]:
+def derive_query_terms(text: str, domain_route: DomainRoute, stage: str) -> list[str]:
     important = [
         "HeLa",
         "trehalose",
@@ -176,8 +184,24 @@ def derive_key_terms(text: str) -> list[str]:
     ]
     lowered = text.lower()
     terms = [term for term in important if term.lower() in lowered]
+    if stage == "protocol":
+        defaults = {
+            DomainRoute.cell_biology: ["cell freezing", "cryopreservation", "post-thaw viability"],
+            DomainRoute.diagnostics_biosensor: ["electrochemical biosensor", "CRP assay", "antibody functionalization"],
+            DomainRoute.animal_gut_health: ["FITC-dextran assay", "gut permeability", "Lactobacillus culture"],
+            DomainRoute.microbial_electrochemistry: ["microbial electrosynthesis", "anaerobic culture", "acetate quantification"],
+        }
+        terms.extend(defaults[domain_route])
+    if stage == "supplier":
+        defaults = {
+            DomainRoute.cell_biology: ["ATCC CCL-2", "trehalose", "CellTiter-Glo"],
+            DomainRoute.diagnostics_biosensor: ["anti-CRP antibody", "CRP ELISA kit"],
+            DomainRoute.animal_gut_health: ["Lactobacillus rhamnosus GG"],
+            DomainRoute.microbial_electrochemistry: ["reactor materials", "anaerobic supplies"],
+        }
+        terms.extend(defaults[domain_route])
     if terms:
-        return terms[:8]
+        return dedupe_terms(terms)[:8]
     return [word.strip(".,;:()") for word in text.split()[:8] if len(word.strip(".,;:()")) > 3]
 
 
@@ -206,7 +230,35 @@ def normalize_parsed_hypothesis(
 ) -> ParsedHypothesis:
     domain_route = resolve_domain_route(hypothesis, preset_id) if preset_id else parsed.domain_route
     domain = domain_label_for_route(domain_route) if preset_id else (parsed.domain or domain_label_for_route(domain_route))
-    return parsed.model_copy(update={"domain_route": domain_route, "domain": domain})
+    return parsed.model_copy(
+        update={
+            "domain_route": domain_route,
+            "domain": domain,
+            "scientific_system": parsed.scientific_system or _default_scientific_system(domain_route),
+            "literature_query_terms": dedupe_terms(parsed.literature_query_terms),
+            "protocol_query_terms": dedupe_terms(parsed.protocol_query_terms),
+            "supplier_material_query_terms": dedupe_terms(parsed.supplier_material_query_terms),
+        }
+    )
+
+
+def _default_scientific_system(domain_route: DomainRoute) -> str:
+    labels = {
+        DomainRoute.cell_biology: "mammalian cell cryopreservation",
+        DomainRoute.diagnostics_biosensor: "diagnostic biosensor assay development",
+        DomainRoute.animal_gut_health: "mouse gut permeability study",
+        DomainRoute.microbial_electrochemistry: "microbial electrosynthesis system",
+    }
+    return labels[domain_route]
+
+
+def dedupe_terms(values: list[str]) -> list[str]:
+    deduped: list[str] = []
+    for value in values:
+        cleaned = value.strip()
+        if cleaned and cleaned not in deduped:
+            deduped.append(cleaned)
+    return deduped
 
 
 def generic_review_plan(
@@ -224,6 +276,7 @@ def generic_review_plan(
                 url=None,
                 evidence_type=EvidenceType.assumption,
                 trust_tier=TrustTier.inferred,
+                trust_level=TrustLevel.low,
                 snippet="The plan is intentionally high-level because searched providers returned no usable evidence.",
                 authors=[],
                 year=None,
@@ -311,7 +364,7 @@ def generic_review_plan(
                 title="Evidence review and design lock",
                 purpose="Separate source-backed details from assumptions before laboratory planning.",
                 actions=[
-                    "Review Literature QC references and evidence gaps.",
+                    "Review Literature QC references, provider trace, and evidence gaps.",
                     "Map source-backed details to the proposed design.",
                     "Flag all inferred details for expert review.",
                 ],
@@ -417,6 +470,7 @@ def apply_plan_guardrails(
                 url=None,
                 evidence_type=EvidenceType.assumption,
                 trust_tier=TrustTier.inferred,
+                trust_level=TrustLevel.low,
                 snippet="The plan is intentionally conservative because the evidence pack was empty.",
                 authors=[],
                 year=None,
@@ -451,6 +505,7 @@ def apply_plan_guardrails(
             step.expert_review_required = True
             if not step.review_reason:
                 step.review_reason = "Protocol evidence is limited for this preset and requires expert review."
+        step = apply_domain_specific_protocol_guardrails(step, parsed, known_sources)
         normalized_protocol.append(ProtocolStep.model_validate(step.model_dump()))
 
     normalized_materials: list[MaterialItem] = []
@@ -477,9 +532,36 @@ def has_retrieved_protocol_support(evidence_pack: EvidencePack) -> bool:
         if source.trust_tier == TrustTier.inferred:
             continue
         if source.evidence_type in {
-            EvidenceType.exact_evidence,
-            EvidenceType.adjacent_evidence,
-            EvidenceType.generic_protocol_evidence,
+            EvidenceType.exact_match,
+            EvidenceType.close_match,
+            EvidenceType.adjacent_method,
+            EvidenceType.generic_method,
         }:
             return True
     return False
+
+
+def apply_domain_specific_protocol_guardrails(
+    step: ProtocolStep,
+    parsed: ParsedHypothesis,
+    known_sources: list[EvidenceSource],
+) -> ProtocolStep:
+    supported_ids = {source.id for source in known_sources if source.trust_tier != TrustTier.inferred}
+    has_supported_source = any(source_id in supported_ids for source_id in step.evidence_source_ids)
+    joined_text = " ".join([step.title, step.purpose, *step.actions, *step.critical_parameters]).lower()
+
+    if parsed.domain_route == DomainRoute.animal_gut_health and any(
+        token in joined_text for token in ["dose", "housing", "gavage", "fitc-dextran", "sample size", "euthanasia"]
+    ) and not has_supported_source:
+        step.expert_review_required = True
+        step.confidence = min(step.confidence, 0.4)
+        step.review_reason = "Animal dosing, housing, gavage, FITC-dextran, sample-size, and euthanasia details must be source-backed."
+
+    if parsed.domain_route == DomainRoute.microbial_electrochemistry and any(
+        token in joined_text for token in ["cathode potential", "reactor", "co2", "anaerobic", "acetate", "benchmark"]
+    ) and not has_supported_source:
+        step.expert_review_required = True
+        step.confidence = min(step.confidence, 0.4)
+        step.review_reason = "Cathode potential, reactor design, CO2 delivery, anaerobic handling, acetate quantification, and benchmarks must be source-backed."
+
+    return step

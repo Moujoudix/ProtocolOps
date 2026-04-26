@@ -8,12 +8,19 @@ const parsedHypothesis = {
   original_text: "HeLa cells with trehalose versus DMSO.",
   domain: "cell biology",
   domain_route: "cell_biology" as const,
+  scientific_system: "mammalian cell cryopreservation",
+  model_or_organism: "HeLa cells",
   organism_or_system: "HeLa cells",
   intervention: "trehalose",
   comparator: "DMSO",
+  outcome_metric: "post-thaw viability",
+  success_threshold: "15 percentage points",
   outcome: "post-thaw viability",
   effect_size: "15 percentage points",
   mechanism: "membrane stabilization",
+  literature_query_terms: ["trehalose HeLa cryopreservation viability DMSO"],
+  protocol_query_terms: ["cell freezing", "cell thawing"],
+  supplier_material_query_terms: ["ATCC CCL-2", "trehalose product page"],
   key_terms: ["HeLa", "trehalose"],
   safety_notes: [],
 };
@@ -38,8 +45,9 @@ const plan = {
         source_name: "Semantic Scholar",
         title: "Adjacent trehalose evidence",
         url: "https://example.com/adjacent",
-        evidence_type: "adjacent_evidence" as const,
+        evidence_type: "adjacent_method" as const,
         trust_tier: "literature_database" as const,
+        trust_level: "medium" as const,
         snippet: "Adjacent evidence snippet",
         authors: [],
         year: 2024,
@@ -48,8 +56,22 @@ const plan = {
         retrieved_at: "2026-04-26T00:00:00Z",
       },
     ],
+    literature_sources: [],
     searched_sources: ["Semantic Scholar", "Europe PMC"],
+    provider_trace: [
+      {
+        provider: "Consensus",
+        attempted: true,
+        succeeded: false,
+        cached: false,
+        query: "trehalose HeLa cryopreservation viability DMSO",
+        result_count: 0,
+        error: "Consensus bridge unavailable",
+      },
+    ],
     rationale: "Similar work exists.",
+    literature_synthesis: "Top references indicate adjacent trehalose cryopreservation evidence.",
+    gaps: ["Exact protocol still needs expert review."],
     evidence_gap_warnings: ["Exact protocol still needs expert review."],
   },
   study_design: {
@@ -157,8 +179,9 @@ const plan = {
       source_name: "ATCC",
       title: "ATCC HeLa cell line product page (CCL-2)",
       url: "https://example.com/atcc",
-      evidence_type: "supplier_evidence" as const,
+      evidence_type: "supplier_reference" as const,
       trust_tier: "supplier_documentation" as const,
+      trust_level: "high" as const,
       snippet: "Supplier documentation",
       authors: [],
       year: null,
@@ -171,8 +194,9 @@ const plan = {
       source_name: "Semantic Scholar",
       title: "Adjacent trehalose evidence",
       url: "https://example.com/adjacent",
-      evidence_type: "adjacent_evidence" as const,
+      evidence_type: "adjacent_method" as const,
       trust_tier: "literature_database" as const,
+      trust_level: "medium" as const,
       snippet: "Adjacent evidence snippet",
       authors: [],
       year: 2024,
@@ -185,8 +209,9 @@ const plan = {
       source_name: "protocols.io fallback",
       title: "Community cryopreservation protocol scaffold",
       url: "https://example.com/protocols",
-      evidence_type: "generic_protocol_evidence" as const,
+      evidence_type: "generic_method" as const,
       trust_tier: "community_protocol" as const,
+      trust_level: "low" as const,
       snippet: "Community scaffold",
       authors: [],
       year: null,
@@ -201,6 +226,7 @@ const plan = {
       url: null,
       evidence_type: "assumption" as const,
       trust_tier: "inferred" as const,
+      trust_level: "low" as const,
       snippet: "Expert review required",
       authors: [],
       year: null,
@@ -231,6 +257,8 @@ describe("PlanTabs", () => {
     expect(screen.getAllByText("Adjacent evidence").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Community source").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Inferred / expert review required").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("High trust").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Supplier documentation").length).toBeGreaterThan(0);
     expect(screen.getByText("ATCC")).toBeInTheDocument();
     expect(screen.getByText(/ATCC HeLa cell stock/)).toBeInTheDocument();
     expect(screen.getAllByText(/Protocol step 1/).length).toBeGreaterThan(0);

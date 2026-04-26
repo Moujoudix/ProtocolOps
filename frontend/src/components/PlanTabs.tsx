@@ -91,12 +91,19 @@ function fallbackParsedHypothesis(plan: ExperimentPlan): ParsedHypothesis {
     original_text: plan.overview.bullets[0] ?? plan.plan_title,
     domain: plan.plan_title,
     domain_route: "cell_biology",
+    scientific_system: null,
+    model_or_organism: null,
     organism_or_system: null,
     intervention: null,
     comparator: null,
+    outcome_metric: null,
+    success_threshold: null,
     outcome: null,
     effect_size: null,
     mechanism: null,
+    literature_query_terms: [],
+    protocol_query_terms: [],
+    supplier_material_query_terms: [],
     key_terms: [],
     safety_notes: [],
   };
@@ -259,6 +266,7 @@ function SourcesView({ sources, sourceUsage }: { sources: EvidenceSource[]; sour
         <article key={source.id} className="rounded-md border border-zinc-200 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{source.id}</Badge>
+            <Badge tone={trustLevelTone(source.trust_level)}>{humanizeTrustLevel(source.trust_level)}</Badge>
             <Badge tone={trustTierTone(source.trust_tier)}>{humanizeTrustTier(source.trust_tier)}</Badge>
             <Badge tone={evidenceTone(source)}>{humanizeEvidenceClass(source)}</Badge>
             <ConfidenceBadge value={source.confidence} />
@@ -267,7 +275,8 @@ function SourcesView({ sources, sourceUsage }: { sources: EvidenceSource[]; sour
           <p className="mt-2 text-sm leading-6 text-zinc-700">{source.snippet}</p>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <MetaField label="Provider" value={source.source_name} />
-            <MetaField label="Trust tier" value={humanizeTrustTier(source.trust_tier)} />
+            <MetaField label="Trust level" value={humanizeTrustLevel(source.trust_level)} />
+            <MetaField label="Provenance" value={humanizeTrustTier(source.trust_tier)} />
             <MetaField label="Evidence class" value={humanizeEvidenceClass(source)} />
             <MetaField label="Used in sections" value={(sourceUsage.get(source.id) ?? ["Not referenced"]).join(", ")} />
             <MetaField label="Confidence" value={`${Math.round(source.confidence * 100)}%`} />
@@ -291,7 +300,7 @@ function SourceChips({ ids, sourceById }: { ids: string[]; sourceById: Map<strin
       {ids.map((id) => {
         const source = sourceById.get(id);
         return (
-          <Badge key={id} tone={source?.trust_tier === "inferred" ? "red" : source?.trust_tier === "supplier_documentation" ? "blue" : "neutral"}>
+          <Badge key={id} tone={source?.trust_tier === "inferred" ? "red" : source?.trust_level === "high" ? "green" : "neutral"}>
             {id}
           </Badge>
         );
@@ -331,9 +340,19 @@ function humanizeTrustTier(trustTier: EvidenceSource["trust_tier"]) {
     literature_database: "Literature database",
     supplier_documentation: "Supplier documentation",
     community_protocol: "Community source",
+    scientific_standard: "Scientific standard",
     inferred: "Inferred / expert review required",
   };
   return labels[trustTier];
+}
+
+function humanizeTrustLevel(trustLevel: EvidenceSource["trust_level"]) {
+  const labels: Record<EvidenceSource["trust_level"], string> = {
+    high: "High trust",
+    medium: "Medium trust",
+    low: "Low trust",
+  };
+  return labels[trustLevel];
 }
 
 function humanizeEvidenceClass(source: EvidenceSource) {
@@ -343,20 +362,27 @@ function humanizeEvidenceClass(source: EvidenceSource) {
   if (source.trust_tier === "inferred" || source.evidence_type === "assumption") {
     return "Inferred / expert review required";
   }
-  if (source.evidence_type === "adjacent_evidence") {
+  if (source.evidence_type === "adjacent_method" || source.evidence_type === "close_match") {
     return "Adjacent evidence";
   }
-  if (source.trust_tier === "supplier_documentation" || source.evidence_type === "exact_evidence") {
+  if (
+    source.trust_level === "high" ||
+    source.evidence_type === "exact_match" ||
+    source.evidence_type === "supplier_reference"
+  ) {
     return "Source-backed";
   }
-  if (source.evidence_type === "generic_protocol_evidence") {
-    return "Generic protocol evidence";
+  if (source.trust_tier === "scientific_standard" || source.evidence_type === "safety_or_standard") {
+    return "Scientific standard";
+  }
+  if (source.evidence_type === "generic_method") {
+    return "Generic method";
   }
   return "Source-backed";
 }
 
 function trustTierTone(trustTier: EvidenceSource["trust_tier"]): "green" | "amber" | "red" | "blue" {
-  if (trustTier === "supplier_documentation" || trustTier === "literature_database") {
+  if (trustTier === "supplier_documentation" || trustTier === "literature_database" || trustTier === "scientific_standard") {
     return "green";
   }
   if (trustTier === "community_protocol") {
@@ -365,12 +391,25 @@ function trustTierTone(trustTier: EvidenceSource["trust_tier"]): "green" | "ambe
   return "red";
 }
 
+function trustLevelTone(trustLevel: EvidenceSource["trust_level"]): "green" | "amber" | "red" | "blue" {
+  if (trustLevel === "high") {
+    return "green";
+  }
+  if (trustLevel === "medium") {
+    return "amber";
+  }
+  return "red";
+}
+
 function evidenceTone(source: EvidenceSource): "green" | "amber" | "red" | "blue" {
-  if (source.evidence_type === "adjacent_evidence") {
+  if (source.evidence_type === "adjacent_method" || source.evidence_type === "close_match") {
     return "amber";
   }
   if (source.trust_tier === "community_protocol") {
     return "blue";
+  }
+  if (source.trust_tier === "scientific_standard" || source.evidence_type === "safety_or_standard") {
+    return "green";
   }
   if (source.trust_tier === "inferred" || source.evidence_type === "assumption") {
     return "red";

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     semantic_scholar_api_key: str | None = None
     protocols_io_token: str | None = None
     tavily_api_key: str | None = None
+    consensus_mcp_enabled: bool = False
+    consensus_mcp_bridge_url: str | None = None
 
     request_timeout_seconds: float = Field(default=12.0, ge=1.0)
 

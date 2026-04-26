@@ -24,18 +24,24 @@ def host_from_url(url: str | None) -> str | None:
     return host or None
 
 
+def normalize_hypothesis_key(text: str) -> str:
+    compact = " ".join(text.lower().split())
+    return compact[:500]
+
+
 def classify_evidence(parsed: ParsedHypothesis, title: str, snippet: str, default: EvidenceType) -> EvidenceType:
     haystack = f"{title} {snippet}".lower()
     required = [
-        parsed.organism_or_system,
+        parsed.model_or_organism or parsed.organism_or_system,
         parsed.intervention,
         parsed.comparator,
-        parsed.outcome,
+        parsed.outcome_metric or parsed.outcome,
     ]
     matches = sum(1 for item in required if item and any(token in haystack for token in item.lower().split()[:3]))
-    if matches >= 3:
-        return EvidenceType.exact_evidence
+    if matches >= 4:
+        return EvidenceType.exact_match
+    if matches >= 2:
+        return EvidenceType.close_match
     if matches >= 1:
-        return EvidenceType.adjacent_evidence
+        return EvidenceType.adjacent_method
     return default
-

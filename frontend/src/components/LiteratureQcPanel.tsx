@@ -25,6 +25,9 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
           <ConfidenceBadge value={qc.confidence} />
         </div>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-700">{qc.rationale}</p>
+        {qc.literature_synthesis && (
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">{qc.literature_synthesis}</p>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           {qc.searched_sources.map((source) => (
             <Badge key={source}>{source}</Badge>
@@ -37,19 +40,16 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Parsed Hypothesis</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <Field label="Domain" value={parsed.domain} />
-            <Field label="System" value={parsed.organism_or_system} />
+            <Field label="Scientific system" value={parsed.scientific_system} />
+            <Field label="Model or organism" value={parsed.model_or_organism} />
             <Field label="Intervention" value={parsed.intervention} />
             <Field label="Comparator" value={parsed.comparator} />
-            <Field label="Outcome" value={parsed.outcome} />
-            <Field label="Effect" value={parsed.effect_size} />
+            <Field label="Outcome metric" value={parsed.outcome_metric} />
+            <Field label="Success threshold" value={parsed.success_threshold} />
           </dl>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {parsed.key_terms.map((term) => (
-              <Badge key={term} tone="blue">
-                {term}
-              </Badge>
-            ))}
-          </div>
+          <QueryTerms label="Literature query terms" values={parsed.literature_query_terms} />
+          <QueryTerms label="Protocol query terms" values={parsed.protocol_query_terms} />
+          <QueryTerms label="Supplier/material query terms" values={parsed.supplier_material_query_terms} />
         </div>
 
         <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
@@ -86,11 +86,32 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
         </div>
       </div>
 
+      <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Provider Trace</h2>
+        <div className="mt-4 space-y-3">
+          {qc.provider_trace.length === 0 ? (
+            <p className="text-sm text-zinc-500">No provider trace recorded for this run.</p>
+          ) : (
+            qc.provider_trace.map((entry) => (
+              <article key={`${entry.provider}-${entry.query}-${entry.cached}`} className="rounded-md border border-zinc-200 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={entry.succeeded ? "green" : "red"}>{entry.provider}</Badge>
+                  {entry.cached && <Badge tone="blue">cache hit</Badge>}
+                  <Badge>{entry.result_count} results</Badge>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">{entry.query}</p>
+                {entry.error && <p className="mt-1 text-xs text-rose-700">{entry.error}</p>}
+              </article>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1">
-            {qc.evidence_gap_warnings.map((warning) => (
+            {(qc.gaps.length > 0 ? qc.gaps : qc.evidence_gap_warnings).map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
@@ -102,10 +123,14 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
 
 function sourceContextBadges(source: EvidenceSource): Array<{ label: string; tone: "green" | "amber" | "red" | "blue" }> {
   const badges: Array<{ label: string; tone: "green" | "amber" | "red" | "blue" }> = [];
-  if (source.trust_tier === "supplier_documentation" || source.trust_tier === "literature_database" || source.evidence_type === "exact_evidence") {
+  if (
+    source.trust_level === "high" ||
+    source.evidence_type === "exact_match" ||
+    source.evidence_type === "supplier_reference"
+  ) {
     badges.push({ label: "Source-backed", tone: "green" });
   }
-  if (source.evidence_type === "adjacent_evidence") {
+  if (source.evidence_type === "adjacent_method" || source.evidence_type === "close_match") {
     badges.push({ label: "Adjacent evidence", tone: "amber" });
   }
   if (source.trust_tier === "community_protocol") {
@@ -115,6 +140,25 @@ function sourceContextBadges(source: EvidenceSource): Array<{ label: string; ton
     badges.push({ label: "Inferred / expert review required", tone: "red" });
   }
   return badges;
+}
+
+function QueryTerms({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div className="mt-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {values.length === 0 ? (
+          <p className="text-sm text-zinc-500">Not specified</p>
+        ) : (
+          values.map((value) => (
+            <Badge key={`${label}-${value}`} tone="blue">
+              {value}
+            </Badge>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Field({ label, value }: { label: string; value: string | null }) {
