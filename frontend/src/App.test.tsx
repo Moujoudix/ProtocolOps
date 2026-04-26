@@ -95,7 +95,7 @@ describe("App", () => {
     expect(screen.getByText("Diagnostics / CRP biosensor")).toBeInTheDocument();
     expect(screen.getByText("Example hypotheses")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /generate plan/i })).toBeDisabled();
-    expect(screen.getByText("Provider readiness")).toBeInTheDocument();
+    expect(screen.getByText("System status")).toBeInTheDocument();
   });
 
   it("runs Literature QC and enables plan generation", async () => {

@@ -266,8 +266,8 @@ describe("PlanTabs", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Materials" }));
 
-    expect(screen.getAllByText("Requires procurement check").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Contact supplier").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Needs procurement confirmation").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Supplier confirmation required").length).toBeGreaterThan(0);
   });
 
   it("renders the Sources tab with trust tier, evidence class, and usage", async () => {
@@ -309,7 +309,7 @@ describe("PlanTabs", () => {
       />,
     );
 
-    expect(screen.getByText(/prior reviewed signals applied/i)).toBeInTheDocument();
+    expect(screen.getByText("Review memory applied")).toBeInTheDocument();
     expect(screen.getByText("Run timeline")).toBeInTheDocument();
     expect(screen.getAllByText("Cached live evidence").length).toBeGreaterThan(0);
   });

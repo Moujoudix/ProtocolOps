@@ -66,14 +66,15 @@ const qc = {
 };
 
 describe("LiteratureQcPanel", () => {
-  it("renders provider trace, parsed query terms, and gaps", () => {
+  it("renders references first and keeps provider trace in search details", () => {
     render(<LiteratureQcPanel parsed={parsed} qc={qc} />);
 
-    expect(screen.getByText("Provider Trace")).toBeInTheDocument();
+    expect(screen.getByText("Search details")).toBeInTheDocument();
     expect(screen.getAllByText("Consensus").length).toBeGreaterThan(0);
     expect(screen.getAllByText("trehalose HeLa cryopreservation viability DMSO").length).toBeGreaterThan(0);
     expect(screen.getByText("Literature query terms")).toBeInTheDocument();
     expect(screen.getByText("ATCC CCL-2")).toBeInTheDocument();
+    expect(screen.getByText("What still needs scientific judgment")).toBeInTheDocument();
     expect(screen.getByText("Exact protocol still needs expert review.")).toBeInTheDocument();
   });
 });

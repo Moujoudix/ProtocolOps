@@ -16,7 +16,7 @@ const stages = [
 
 export function StageRail({ active, hasQc, hasPlan }: StageRailProps) {
   return (
-    <div className="grid grid-cols-3 gap-2" aria-label="Workflow stages">
+    <div className="grid grid-cols-3 gap-2 rounded-lg border border-zinc-200 bg-white p-1" aria-label="Workflow stages">
       {stages.map((stage) => {
         const Icon = stage.icon;
         const complete = (stage.id === "qc" && hasQc) || (stage.id === "plan" && hasPlan);
@@ -24,8 +24,8 @@ export function StageRail({ active, hasQc, hasPlan }: StageRailProps) {
         return (
           <div
             key={stage.id}
-            className={`flex min-h-12 items-center gap-2 rounded-md border px-3 text-sm transition ${
-              selected ? "border-zinc-900 bg-zinc-950 text-white" : "border-zinc-200 bg-white text-zinc-700"
+            className={`flex min-h-12 items-center gap-2 rounded-md px-3 text-sm transition ${
+              selected ? "bg-zinc-950 text-white" : complete ? "bg-zinc-100 text-zinc-900" : "text-zinc-500"
             }`}
           >
             {complete ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <Icon className="h-4 w-4 shrink-0" />}
@@ -36,4 +36,3 @@ export function StageRail({ active, hasQc, hasPlan }: StageRailProps) {
     </div>
   );
 }
-

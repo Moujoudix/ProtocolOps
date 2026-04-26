@@ -1,16 +1,14 @@
 import {
   Activity,
   AlertTriangle,
+  ChevronDown,
   FlaskConical,
   History,
   Loader2,
   Play,
   Search,
-  ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
 
 import { LiteratureQcPanel } from "./components/LiteratureQcPanel";
 import { PlanTabs } from "./components/PlanTabs";
@@ -328,55 +326,48 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen text-zinc-950">
-      <header className="border-b border-zinc-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f5f6f3] text-zinc-950">
+      <header className="border-b border-zinc-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-950 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-950 text-white">
               <FlaskConical className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-normal">AI Scientist</h1>
-              <p className="text-sm text-zinc-500">Hypothesis to review-ready experiment plan</p>
+              <h1 className="text-lg font-semibold tracking-normal">ProtocolOps AI</h1>
+              <p className="text-sm text-zinc-500">Review-ready experiment planning workspace</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">Backend-only secrets</span>
-            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">Evidence-gated planning</span>
-            <span
-              className={`rounded-full border px-3 py-1 ${
-                readiness?.live_ready ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-amber-300 bg-amber-50 text-amber-800"
-              }`}
-            >
-              {readiness?.live_ready ? "Live providers ready" : "Degraded or demo mode"}
-            </span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-600">
             {readiness && (
-              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">
-                Evidence mode: {humanizeEvidenceMode(readiness.evidence_mode)}
-              </span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    readiness.live_ready ? "bg-emerald-500" : "bg-amber-500"
+                  }`}
+                />
+                <span className="font-medium text-zinc-800">
+                  {readiness.live_ready ? "Live ready" : "Presentation fallback ready"}
+                </span>
+                <span className="text-zinc-400">·</span>
+                <span>{humanizeEvidenceMode(readiness.evidence_mode)}</span>
+              </div>
             )}
-            {isPresentationAnchor && (
-              <span className="rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-cyan-800">Presentation anchor</span>
-            )}
+            {isPresentationAnchor && <span className="text-xs font-medium text-cyan-700">Presentation anchor</span>}
           </div>
         </div>
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8 workspace-grid">
-        <aside className="space-y-5">
+        <aside className="space-y-4">
           <StageRail active={activeStage} hasQc={Boolean(qcResponse)} hasPlan={Boolean(planResponse)} />
 
-          <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
+          <section className="rounded-lg border border-zinc-200 bg-white p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">Hypothesis</h2>
-                <p className="mt-1 text-sm leading-6 text-zinc-500">Try a challenge example or edit the hypothesis directly.</p>
+                <h2 className="text-base font-semibold">Experiment setup</h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-500">Choose an example hypothesis or edit the scientific question directly.</p>
               </div>
-              {selectedPreset?.optimized_demo && (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
-                  demo path
-                </span>
-              )}
             </div>
 
             <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor="preset">
@@ -428,96 +419,77 @@ export default function App() {
                 {loading === "plan" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                 Generate Plan
               </button>
+              {!qcResponse && <p className="text-xs text-zinc-500">Run Literature QC to unlock planning.</p>}
             </div>
           </section>
 
-          <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-zinc-500" />
-              <h2 className="text-base font-semibold">Provider readiness</h2>
-            </div>
-            <p className="mt-1 text-sm leading-6 text-zinc-500">What the app can use right now for a fully live run.</p>
-            <div className="mt-4 space-y-3">
-              {(readiness?.providers ?? []).map((provider) => (
-                <ProviderStatusCard key={provider.provider} provider={provider} />
-              ))}
-            </div>
-            {readiness && (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
-                  {readiness.strict_live_mode
-                    ? "Strict live mode is on. Seeded fallbacks will fail the run."
-                    : "Strict live mode is off. The app can still fall back for demo reliability."}
-                </div>
-                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
-                  <p>
-                    Evidence mode: <span className="font-semibold text-zinc-900">{humanizeEvidenceMode(readiness.evidence_mode)}</span>
-                  </p>
-                  <p className="mt-1">
-                    Cached live available:{" "}
-                    <span className="font-semibold text-zinc-900">{readiness.cached_live_available ? "Yes" : "No"}</span>
-                  </p>
-                  <p className="mt-1">
-                    Seeded demo available:{" "}
-                    <span className="font-semibold text-zinc-900">{readiness.seeded_demo_available ? "Yes" : "No"}</span>
-                  </p>
+          <details className="rounded-lg border border-zinc-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-zinc-500" />
+                <div>
+                  <p className="text-sm font-semibold text-zinc-950">System status</p>
+                  <p className="text-xs text-zinc-500">Readiness, evidence mode, and fallback availability</p>
                 </div>
               </div>
-            )}
-          </section>
-
-          <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
-            <div className="flex items-center gap-2">
-              <History className="h-4 w-4 text-zinc-500" />
-              <h2 className="text-base font-semibold">Recent runs</h2>
-            </div>
-            <p className="mt-1 text-sm leading-6 text-zinc-500">Persistent run history for reopen and sharing.</p>
-            <div className="mt-4 space-y-3">
-              {recentRuns.length === 0 ? (
-                <p className="text-sm text-zinc-500">No stored runs yet.</p>
-              ) : (
-                recentRuns.slice(0, 6).map((run) => (
-                  <button
-                    key={run.run_id}
-                    type="button"
-                    onClick={() => void openRun(run.run_id)}
-                    className={`w-full rounded-md border p-3 text-left transition hover:border-zinc-950 ${
-                      currentRunId === run.run_id ? "border-emerald-300 bg-emerald-50" : "border-zinc-200 bg-white"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-zinc-950">{run.plan_title ?? run.domain ?? "Saved run"}</span>
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">{run.status}</span>
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-xs ${
-                          run.run_mode === "fully_live"
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                            : run.run_mode === "demo_fallback"
-                              ? "border-amber-300 bg-amber-50 text-amber-800"
-                              : "border-zinc-300 bg-zinc-50 text-zinc-700"
-                        }`}
-                      >
-                        {humanizeRunMode(run.run_mode)}
-                      </span>
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-700">
-                        {humanizeEvidenceMode(run.evidence_mode)}
-                      </span>
-                      {run.is_presentation_anchor && (
-                        <span className="rounded-full border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs text-cyan-800">anchor</span>
-                      )}
-                      {run.revision_number > 0 && (
-                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-600">rev {run.revision_number}</span>
-                      )}
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">{run.hypothesis}</p>
-                  </button>
-                ))
+              <ChevronDown className="h-4 w-4 text-zinc-400" />
+            </summary>
+            <div className="border-t border-zinc-200 px-5 py-4">
+              <div className="space-y-3">
+                {(readiness?.providers ?? []).map((provider) => (
+                  <ProviderStatusCard key={provider.provider} provider={provider} />
+                ))}
+              </div>
+              {readiness && (
+                <div className="mt-4 grid gap-3 rounded-lg bg-zinc-50 p-4 text-sm text-zinc-700 sm:grid-cols-3">
+                  <StatusRow label="Mode" value={humanizeEvidenceMode(readiness.evidence_mode)} />
+                  <StatusRow label="Cached live" value={readiness.cached_live_available ? "Available" : "Not yet captured"} />
+                  <StatusRow label="Seeded demo" value={readiness.seeded_demo_available ? "Available" : "Unavailable"} />
+                </div>
               )}
             </div>
-          </section>
+          </details>
+
+          <details className="rounded-lg border border-zinc-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-zinc-500" />
+                <div>
+                  <p className="text-sm font-semibold text-zinc-950">Recent runs</p>
+                  <p className="text-xs text-zinc-500">Reopen prior plans and presentation anchors</p>
+                </div>
+              </div>
+              <ChevronDown className="h-4 w-4 text-zinc-400" />
+            </summary>
+            <div className="border-t border-zinc-200 px-5 py-4">
+              <div className="space-y-3">
+                {recentRuns.length === 0 ? (
+                  <p className="text-sm text-zinc-500">No stored runs yet.</p>
+                ) : (
+                  recentRuns.slice(0, 6).map((run) => (
+                    <button
+                      key={run.run_id}
+                      type="button"
+                      onClick={() => void openRun(run.run_id)}
+                      className={`w-full rounded-lg border p-3 text-left transition hover:border-zinc-950 ${
+                        currentRunId === run.run_id ? "border-emerald-300 bg-emerald-50/60" : "border-zinc-200 bg-white"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-zinc-950">{run.plan_title ?? run.domain ?? "Saved run"}</span>
+                        <span className="text-xs text-zinc-500">{humanizeEvidenceMode(run.evidence_mode)}</span>
+                        {run.is_presentation_anchor && <span className="text-xs font-medium text-cyan-700">Anchor</span>}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">{run.hypothesis}</p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </details>
 
           {error && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
               <div className="flex gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{error}</span>
@@ -528,7 +500,7 @@ export default function App() {
 
         <section className="min-w-0 space-y-5">
           {loading && (
-            <div className="rounded-md border border-zinc-200 bg-white p-4 shadow-crisp">
+            <div className="rounded-lg border border-zinc-200 bg-white p-4">
               <div className="flex items-center gap-3">
                 <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                 <div>
@@ -539,36 +511,17 @@ export default function App() {
             </div>
           )}
           {!qcResponse && !planResponse && (
-            <div className="enter-up rounded-md border border-zinc-200 bg-white p-6 shadow-crisp">
+            <div className="enter-up rounded-xl border border-zinc-200 bg-white px-6 py-7">
               <div className="max-w-4xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Stage 1</span>
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-600">
-                    Input to QC to Plan
-                  </span>
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950">Start with Literature QC</h2>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">
-                  The planner stays locked until the backend parses the hypothesis and returns novelty, provider trace,
-                  references, and evidence gaps. That keeps the experiment plan grounded in the searched sources rather
-                  than the raw prompt alone.
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Start here</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-normal text-zinc-950">Ground the hypothesis before you plan the experiment.</h2>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">
+                  Run Literature QC first, review the novelty signal and references, then generate a review-ready plan with sourcing and operational caveats already attached.
                 </p>
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <ValueCallout
-                    icon={<Search className="h-4 w-4" />}
-                    label="Evidence gate"
-                    body="Literature QC runs before plan generation every time."
-                  />
-                  <ValueCallout
-                    icon={<ShieldCheck className="h-4 w-4" />}
-                    label="Operational guardrails"
-                    body="No invented catalog numbers, no invented exact prices, explicit procurement flags."
-                  />
-                  <ValueCallout
-                    icon={<Sparkles className="h-4 w-4" />}
-                    label="Scientist learning loop"
-                    body="Reviewed plans can feed the next similar run through retrieval memory."
-                  />
+                <div className="mt-6 grid gap-4 border-t border-zinc-200 pt-5 md:grid-cols-3">
+                  <ValueCallout label="Workflow" body="Literature QC unlocks planning." />
+                  <ValueCallout label="Deliverable" body="Protocol, materials, budget, timeline, validation." />
+                  <ValueCallout label="Trust posture" body="Uncertainty and procurement gaps stay visible." />
                 </div>
               </div>
             </div>
@@ -577,12 +530,12 @@ export default function App() {
           {qcResponse && activeStage !== "plan" && (
             <>
               <LiteratureQcPanel parsed={qcResponse.parsed_hypothesis} qc={qcResponse.literature_qc} />
-              <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-crisp">
+              <div className="rounded-lg border border-zinc-200 bg-white p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-zinc-950">Stage 2 complete</h3>
+                    <h3 className="text-base font-semibold text-zinc-950">Literature QC complete</h3>
                     <p className="mt-1 text-sm text-zinc-600">
-                      Literature QC is stored. Plan generation will now build an evidence pack before drafting the protocol.
+                      The novelty check and references are stored. The next step builds an evidence pack before drafting the plan.
                     </p>
                   </div>
                   <button
@@ -628,10 +581,10 @@ export default function App() {
 function ProviderStatusCard({ provider }: { provider: ProviderReadiness }) {
   const tone =
     provider.status === "ready" || provider.status === "public_mode"
-      ? "border-emerald-200 bg-emerald-50"
+      ? "bg-emerald-50/70"
       : provider.status === "degraded"
-        ? "border-amber-200 bg-amber-50"
-        : "border-rose-200 bg-rose-50";
+        ? "bg-amber-50"
+        : "bg-rose-50";
   const textTone =
     provider.status === "ready" || provider.status === "public_mode"
       ? "text-emerald-900"
@@ -640,25 +593,30 @@ function ProviderStatusCard({ provider }: { provider: ProviderReadiness }) {
         : "text-rose-900";
 
   return (
-    <div className={`rounded-md border p-3 ${tone}`}>
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={`rounded-lg px-3 py-3 ${tone}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={`text-sm font-semibold ${textTone}`}>{provider.provider}</span>
-        <span className="rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-xs text-zinc-700">{humanizeProviderStatus(provider.status)}</span>
-        {provider.authenticated && <span className="rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-xs text-zinc-700">authenticated</span>}
+        <span className="text-xs font-medium text-zinc-600">{humanizeProviderStatus(provider.status)}</span>
       </div>
-      <p className={`mt-2 text-sm leading-6 ${textTone}`}>{provider.detail}</p>
+      <p className={`mt-1 text-sm leading-6 ${textTone}`}>{provider.detail}</p>
     </div>
   );
 }
 
-function ValueCallout({ icon, label, body }: { icon: ReactNode; label: string; body: string }) {
+function ValueCallout({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
-      <div className="flex items-center gap-2 text-zinc-700">
-        {icon}
-        <p className="text-sm font-semibold">{label}</p>
-      </div>
-      <p className="mt-2 text-sm leading-6 text-zinc-600">{body}</p>
+    <div className="space-y-1">
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="text-sm leading-6 text-zinc-700">{body}</p>
+    </div>
+  );
+}
+
+function StatusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="mt-1 font-medium text-zinc-900">{value}</p>
     </div>
   );
 }

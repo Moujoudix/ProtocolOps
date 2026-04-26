@@ -13,7 +13,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #f6f7f5;
+  background: #f5f6f3;
+  color: #18181b;
 }
 
 button,
@@ -23,7 +24,7 @@ select {
 }
 
 .workspace-grid {
-  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
 }
 
 @media (max-width: 960px) {
@@ -47,3 +48,6 @@ select {
   animation: enter-up 260ms ease-out both;
 }
 
+summary::-webkit-details-marker {
+  display: none;
+}

@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, ExternalLink, GitCompare, History, Link2, RotateCcw, ShieldCheck, Star } from "lucide-react";
+import { AlertTriangle, ChevronDown, Download, ExternalLink, GitCompare, History, Link2, RotateCcw, ShieldCheck, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { exportCitationsUrl, exportJsonUrl, exportPdfUrl, exportProcurementUrl, submitReview } from "../lib/api";
@@ -44,10 +44,8 @@ interface PlanTabsProps {
 const EMPTY_REVIEWS: ReviewSessionRecord[] = [];
 const EMPTY_EVENTS: RunEventRecord[] = [];
 
-const tabLabels = [
+const primaryTabs = [
   "Overview",
-  "Literature QC",
-  "Study Design",
   "Protocol",
   "Materials",
   "Budget",
@@ -55,9 +53,12 @@ const tabLabels = [
   "Validation",
   "Risks",
   "Sources",
-  "Comparison",
   "Review",
 ] as const;
+
+const utilityTabs = ["Literature QC", "Study Design", "Comparison"] as const;
+
+const tabLabels = [...primaryTabs, ...utilityTabs] as const;
 
 type Tab = (typeof tabLabels)[number];
 
@@ -110,6 +111,7 @@ export function PlanTabs({
   const sourceCount = plan.sources.length;
   const procurementCheckCount = countProcurementChecks(plan);
   const expertReviewFlagCount = countExpertReviewFlags(plan);
+  const overallReadiness = plan.quality_summary ? `${Math.round(plan.quality_summary.operational_readiness * 100)}%` : "Not scored";
 
   const providerOptions = useMemo(
     () => ["all", ...Array.from(new Set(plan.sources.map((source) => source.source_name)))],
@@ -228,31 +230,36 @@ export function PlanTabs({
   }
 
   return (
-    <section className="enter-up rounded-md border border-zinc-200 bg-white shadow-crisp">
-      <div className="border-b border-zinc-200 p-5">
+    <section className="enter-up rounded-xl border border-zinc-200 bg-white">
+      <div className="border-b border-zinc-200 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
+          <div className="max-w-4xl">
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{plan.status_label}</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950">{plan.plan_title}</h2>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge tone="amber">{humanizeReviewState(localReviewState)}</Badge>
-              <Badge tone={runModeTone(runMode)}>{humanizeRunMode(runMode)}</Badge>
+              <Badge tone={noveltyTone(plan.literature_qc.novelty_signal)}>{noveltyLabel}</Badge>
               <Badge tone={evidenceModeTone(evidenceMode)}>{humanizeEvidenceMode(evidenceMode)}</Badge>
-              {usedSeedData && <Badge tone="amber">Seeded evidence used</Badge>}
-              {isPresentationAnchor && <Badge tone="blue">Presentation anchor</Badge>}
-              {revisionNumber > 0 && <Badge>Revision {revisionNumber}</Badge>}
-              {plan.memory_applied.length > 0 && <Badge tone="blue">{plan.memory_applied.length} prior reviewed signals applied</Badge>}
-              {plan.quality_summary && <ConfidenceBadge value={plan.quality_summary.operational_readiness} />}
+              {expertReviewFlagCount > 0 && <Badge tone="amber">{expertReviewFlagCount} review flags</Badge>}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-zinc-500">
+              <span>
+                Operational readiness: <span className="font-medium text-zinc-800">{overallReadiness}</span>
+              </span>
+              <span>
+                Review state: <span className="font-medium text-zinc-800">{humanizeReviewState(localReviewState)}</span>
+              </span>
+              <span>
+                Run mode: <span className="font-medium text-zinc-800">{humanizeRunMode(runMode)}</span>
+              </span>
+              {revisionNumber > 0 && <span>Revision {revisionNumber}</span>}
+              {isPresentationAnchor && <span className="font-medium text-cyan-700">Presentation anchor</span>}
+              {usedSeedData && <span className="font-medium text-amber-700">Seeded evidence used</span>}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {runId && (
               <>
-                <ActionLink href={exportJsonUrl(runId)} label="JSON" />
-                <ActionLink href={exportPdfUrl(runId)} label="PDF" />
-                <ActionLink href={exportCitationsUrl(runId)} label="Citations" />
-                <ActionLink href={exportProcurementUrl(runId)} label="Procurement" />
                 <button
                   type="button"
                   onClick={handleShareLink}
@@ -261,6 +268,19 @@ export function PlanTabs({
                   <Link2 className="h-4 w-4" />
                   {linkCopied ? "Link copied" : "Share run"}
                 </button>
+                <details className="relative">
+                  <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 hover:border-zinc-950">
+                    <Download className="h-4 w-4" />
+                    Export
+                    <ChevronDown className="h-4 w-4 text-zinc-400" />
+                  </summary>
+                  <div className="absolute right-0 z-10 mt-2 w-44 rounded-lg border border-zinc-200 bg-white p-2 shadow-lg">
+                    <ActionLink href={exportJsonUrl(runId)} label="JSON" compact />
+                    <ActionLink href={exportPdfUrl(runId)} label="PDF" compact />
+                    <ActionLink href={exportCitationsUrl(runId)} label="Citations" compact />
+                    <ActionLink href={exportProcurementUrl(runId)} label="Procurement" compact />
+                  </div>
+                </details>
                 <button
                   type="button"
                   onClick={() => void handleMarkAnchor()}
@@ -272,90 +292,101 @@ export function PlanTabs({
                 </button>
               </>
             )}
-            <Badge tone="amber">Expert review required</Badge>
           </div>
         </div>
-
-        {plan.quality_summary && (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            <MetricCard label="Operational readiness" value={plan.quality_summary.operational_readiness} />
-            <MetricCard label="Literature confidence" value={plan.quality_summary.literature_confidence} />
-            <MetricCard label="Protocol confidence" value={plan.quality_summary.protocol_confidence} />
-            <MetricCard label="Materials confidence" value={plan.quality_summary.materials_confidence} />
-            <MetricCard label="Budget confidence" value={plan.quality_summary.budget_confidence} />
-            <MetricCard label="Evidence completeness" value={plan.quality_summary.evidence_completeness} />
-          </div>
-        )}
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <SummaryCard label="Novelty signal" value={noveltyLabel} />
-          <SummaryCard label="Evidence mode" value={humanizeEvidenceMode(evidenceMode)} />
+          <SummaryCard label="Operational readiness" value={overallReadiness} />
           <SummaryCard label="Sources" value={`${sourceCount}`} />
-          <SummaryCard label="Expert-review flags" value={`${expertReviewFlagCount}`} />
-          <SummaryCard label="Procurement checks" value={`${procurementCheckCount}`} />
+          <SummaryCard label="Expert review" value={`${expertReviewFlagCount} flags`} />
+          <SummaryCard label="Procurement" value={`${procurementCheckCount} items`} />
         </div>
+      </div>
 
-        {(plan.memory_applied.length > 0 || runEvents.length > 0) && (
-          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-            {plan.memory_applied.length > 0 && (
-              <div className="rounded-md border border-cyan-200 bg-cyan-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-800">Review memory</p>
-                <div className="mt-3 space-y-2">
-                  {plan.memory_applied.slice(0, 3).map((item) => (
-                    <div key={`${item.review_session_id}-${item.target_key}`} className="rounded-md border border-cyan-200 bg-white p-3 text-sm text-zinc-800">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone="blue">{item.target_type}</Badge>
-                        <Badge tone="amber">{item.action}</Badge>
-                        <Badge>{item.target_key}</Badge>
-                      </div>
-                      <p className="mt-2 leading-6">{item.note}</p>
-                    </div>
-                  ))}
-                </div>
+      <div className="border-b border-zinc-200 px-4 py-3">
+        <div className="flex gap-2 overflow-x-auto">
+          {primaryTabs.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`min-h-10 shrink-0 rounded-md px-3 text-sm font-medium transition ${
+                activeTab === tab ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Utilities</span>
+          {utilityTabs.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`min-h-9 shrink-0 rounded-md px-3 text-sm font-medium transition ${
+                activeTab === tab ? "bg-zinc-100 text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6">
+        {activeTab === "Overview" && (
+          <div className="space-y-6">
+            {plan.quality_summary && (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                <MetricCard label="Operational readiness" value={plan.quality_summary.operational_readiness} />
+                <MetricCard label="Literature confidence" value={plan.quality_summary.literature_confidence} />
+                <MetricCard label="Protocol confidence" value={plan.quality_summary.protocol_confidence} />
+                <MetricCard label="Materials confidence" value={plan.quality_summary.materials_confidence} />
+                <MetricCard label="Budget confidence" value={plan.quality_summary.budget_confidence} />
+                <MetricCard label="Evidence completeness" value={plan.quality_summary.evidence_completeness} />
               </div>
             )}
-
-            {runEvents.length > 0 && (
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
-                <div className="flex items-center gap-2">
-                  <History className="h-4 w-4 text-zinc-600" />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600">Run timeline</p>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {runEvents.slice(0, 4).map((event) => (
-                    <div key={event.id} className="rounded-md border border-zinc-200 bg-white p-3 text-sm">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{event.stage}</Badge>
-                        <Badge tone={event.status === "completed" ? "green" : "amber"}>{event.status}</Badge>
-                      </div>
-                      <p className="mt-2 leading-6 text-zinc-700">{event.message}</p>
+            <SectionView section={plan.overview} sourceById={sourceById} onSelectSource={jumpToSource} />
+            {(plan.memory_applied.length > 0 || runEvents.length > 0) && (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                {plan.memory_applied.length > 0 && (
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Review memory applied</p>
+                    <div className="mt-3 space-y-2">
+                      {plan.memory_applied.slice(0, 3).map((item) => (
+                        <div key={`${item.review_session_id}-${item.target_key}`} className="rounded-lg bg-white p-3 text-sm text-zinc-800">
+                          <p className="font-medium text-zinc-900">
+                            {item.target_type} · {item.action}
+                          </p>
+                          <p className="mt-1 leading-6">{item.note}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {runEvents.length > 0 && (
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4 text-zinc-500" />
+                      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Run timeline</p>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {runEvents.slice(0, 4).map((event) => (
+                        <div key={event.id} className="rounded-lg bg-white p-3 text-sm text-zinc-700">
+                          <p className="font-medium text-zinc-900">{event.stage}</p>
+                          <p className="mt-1 leading-6">{event.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto border-b border-zinc-200 px-3 py-2">
-        {tabLabels.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`min-h-10 shrink-0 rounded-md px-3 text-sm font-medium transition ${
-              activeTab === tab ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <div className="p-5">
-        {activeTab === "Overview" && (
-          <SectionView section={plan.overview} sourceById={sourceById} onSelectSource={jumpToSource} />
         )}
         {activeTab === "Literature QC" && (
           <LiteratureQcPanel parsed={parsedHypothesis ?? fallbackParsedHypothesis(plan)} qc={plan.literature_qc} />
@@ -465,7 +496,7 @@ function fallbackParsedHypothesis(plan: ExperimentPlan): ParsedHypothesis {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
       <div className="mt-2 flex items-center gap-2">
         <ConfidenceBadge value={value} />
@@ -476,18 +507,22 @@ function MetricCard({ label, value }: { label: string; value: number }) {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-zinc-200 bg-white p-3">
+    <div className="rounded-lg border border-zinc-200 bg-white p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
       <p className="mt-2 text-sm font-semibold text-zinc-900">{value}</p>
     </div>
   );
 }
 
-function ActionLink({ href, label }: { href: string; label: string }) {
+function ActionLink({ href, label, compact = false }: { href: string; label: string; compact?: boolean }) {
   return (
     <a
       href={href}
-      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 hover:border-zinc-950"
+      className={
+        compact
+          ? "flex items-center rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
+          : "inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 hover:border-zinc-950"
+      }
     >
       <Download className="h-4 w-4" />
       {label}
@@ -510,7 +545,7 @@ function SectionView({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
         <ConfidenceBadge value={section.confidence} />
-        {section.expert_review_required && <Badge tone={warning ? "red" : "amber"}>Expert review</Badge>}
+        {section.expert_review_required && <Badge tone={warning ? "red" : "amber"}>Needs scientific review</Badge>}
       </div>
       <div>
         <h3 className="text-lg font-semibold text-zinc-950">{section.title}</h3>
@@ -541,49 +576,51 @@ function ProtocolView({
   return (
     <div className="space-y-5">
       {steps.map((step) => (
-        <article key={step.step_number} className="rounded-md border border-zinc-200 p-4">
+        <article key={step.step_number} className="rounded-xl border border-zinc-200 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-zinc-950">
-              {step.step_number}. {step.title}
-            </h3>
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-sm font-semibold text-white">
+                {step.step_number}
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-zinc-950">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">{step.purpose}</p>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               <ConfidenceBadge value={step.confidence} />
-              {step.expert_review_required && <Badge tone="amber">Expert review</Badge>}
+              {step.expert_review_required && <Badge tone="amber">Needs review</Badge>}
             </div>
           </div>
-          <p className="mt-2 text-sm leading-6 text-zinc-700">{step.purpose}</p>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</p>
               <ul className="mt-2 space-y-2 text-sm leading-6 text-zinc-800">
                 {step.actions.map((action) => (
-                  <li key={action}>- {action}</li>
+                  <li key={action} className="flex gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                    <span>{action}</span>
+                  </li>
                 ))}
               </ul>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Critical Parameters</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <ul className="mt-2 space-y-2 text-sm leading-6 text-zinc-700">
                 {step.critical_parameters.map((parameter) => (
-                  <Badge key={parameter}>{parameter}</Badge>
+                  <li key={parameter}>{parameter}</li>
                 ))}
-              </div>
+              </ul>
               {step.materials.length > 0 && (
                 <>
                   <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-zinc-500">Materials</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {step.materials.map((material) => (
-                      <Badge key={material} tone="blue">
-                        {material}
-                      </Badge>
-                    ))}
-                  </div>
+                  <p className="mt-2 text-sm leading-6 text-zinc-700">{step.materials.join(", ")}</p>
                 </>
               )}
             </div>
           </div>
           {step.review_reason && (
-            <div className="mt-4 flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="mt-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{step.review_reason}</span>
             </div>
@@ -607,12 +644,12 @@ function MaterialsView({
   onSelectSource: (sourceId: string) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-zinc-200">
+    <div className="overflow-hidden rounded-xl border border-zinc-200">
       <div className="grid grid-cols-[1.2fr_1fr_0.9fr_0.8fr] gap-3 bg-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 max-lg:hidden">
         <span>Material</span>
         <span>Vendor</span>
         <span>Catalog</span>
-        <span>Procurement</span>
+        <span>Status</span>
       </div>
       {materials.map((item) => (
         <div key={`${item.name}-${item.role}`} className="grid gap-3 border-t border-zinc-200 px-4 py-4 text-sm lg:grid-cols-[1.2fr_1fr_0.9fr_0.8fr]">
@@ -625,15 +662,10 @@ function MaterialsView({
             </div>
           </div>
           <span className="break-words text-zinc-700">{item.vendor ?? "Not retrieved"}</span>
-          <span className="break-words text-zinc-700">{item.catalog_number ?? "Null"}</span>
+          <span className="break-words text-zinc-700">{item.catalog_number ?? "Not retrieved"}</span>
           <div className="space-y-2">
-            <Badge tone={item.requires_procurement_check ? "amber" : "green"}>
-              {item.requires_procurement_check ? "Requires procurement check" : "Source-backed"}
-            </Badge>
-            {item.price_status === "contact_supplier" && <Badge tone="blue">Contact supplier</Badge>}
-            <p className="text-xs text-zinc-500">
-              Price: {item.price ?? "Null"} | Status: {humanizePriceStatus(item.price_status)}
-            </p>
+            <p className="font-medium text-zinc-900">{humanizeProcurementStatus(item.procurement_status)}</p>
+            <p className="text-xs leading-5 text-zinc-500">{humanizePriceStatus(item.price_status)}</p>
             <div className="hidden lg:block">
               <SourceChips ids={item.evidence_source_ids} sourceById={sourceById} onSelectSource={onSelectSource} />
             </div>
@@ -659,7 +691,7 @@ function BudgetView({
         section={{
           title: budget.title,
           summary: budget.summary,
-          bullets: budget.items.map((item) => `${item.name}: ${item.requires_procurement_check ? "requires procurement check" : "verified"}`),
+          bullets: budget.items.map((item) => `${item.name}: ${humanizeBudgetLine(item)}`),
           evidence_source_ids: budget.evidence_source_ids,
           confidence: budget.confidence,
           expert_review_required: budget.expert_review_required,
@@ -701,7 +733,7 @@ function SourcesView({
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-4">
+      <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-4">
         <FilterSelect label="Provider" value={providerFilter} onChange={onProviderFilter} options={providerOptions} />
         <FilterSelect label="Trust level" value={trustFilter} onChange={onTrustFilter} options={["all", "high", "medium", "low"]} />
         <FilterSelect
@@ -722,21 +754,22 @@ function SourcesView({
       </div>
 
       {sources.length === 0 ? (
-        <div className="rounded-md border border-zinc-200 p-5 text-sm text-zinc-500">No sources match the active filters.</div>
+        <div className="rounded-xl border border-zinc-200 p-5 text-sm text-zinc-500">No sources match the active filters.</div>
       ) : (
         sources.map((source) => (
           <article
             key={source.id}
-            className={`rounded-md border p-4 ${selectedSourceId === source.id ? "border-emerald-300 bg-emerald-50/40" : "border-zinc-200"}`}
+            className={`rounded-xl border p-5 ${selectedSourceId === source.id ? "border-emerald-300 bg-emerald-50/30" : "border-zinc-200"}`}
           >
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>{source.id}</Badge>
-              <Badge tone={trustLevelTone(source.trust_level)}>{humanizeTrustLevel(source.trust_level)}</Badge>
-              <Badge tone={trustTierTone(source.trust_tier)}>{humanizeTrustTier(source.trust_tier)}</Badge>
-              <Badge tone={evidenceTone(source)}>{humanizeEvidenceClass(source)}</Badge>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-950">{source.title}</h3>
+                <p className="mt-2 text-sm text-zinc-500">
+                  {source.source_name} · {sourceStage.get(source.id) ?? "Evidence Pack"} · {humanizeTrustLevel(source.trust_level)} · {humanizeEvidenceClass(source)}
+                </p>
+              </div>
               <ConfidenceBadge value={source.confidence} />
             </div>
-            <h3 className="mt-2 text-sm font-semibold text-zinc-950">{source.title}</h3>
             <p className="mt-2 text-sm leading-6 text-zinc-700">{source.snippet}</p>
             <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
               <MetaField label="Provider" value={source.source_name} />
@@ -1029,7 +1062,7 @@ function SourceChips({
         return (
           <button key={id} type="button" onClick={() => onSelectSource(id)} className="rounded-full">
             <Badge tone={source?.trust_tier === "inferred" ? "red" : source?.trust_level === "high" ? "green" : "neutral"}>
-              {id}
+              {compactSourceChipLabel(source, id)}
             </Badge>
           </button>
         );
@@ -1166,11 +1199,21 @@ function humanizeRunMode(runMode: RunMode) {
 
 function humanizeEvidenceMode(evidenceMode: EvidenceMode) {
   const labels: Record<EvidenceMode, string> = {
-    strict_live: "Strict live",
+    strict_live: "Live provider run",
     cached_live: "Cached live evidence",
     seeded_demo: "Seeded demo evidence",
   };
   return labels[evidenceMode];
+}
+
+function noveltyTone(signal: ExperimentPlan["literature_qc"]["novelty_signal"]): "green" | "amber" | "red" | "blue" {
+  if (signal === "exact_match_found") {
+    return "green";
+  }
+  if (signal === "similar_work_exists") {
+    return "amber";
+  }
+  return "red";
 }
 
 function runModeTone(runMode: RunMode): "green" | "amber" | "red" | "blue" {
@@ -1231,11 +1274,23 @@ function evidenceTone(source: EvidenceSource): "green" | "amber" | "red" | "blue
 
 function humanizePriceStatus(status: MaterialItem["price_status"]) {
   const labels: Record<MaterialItem["price_status"], string> = {
-    visible_price: "visible price",
-    requires_procurement_check: "requires procurement check",
-    contact_supplier: "contact supplier",
+    visible_price: "Price visible in source",
+    requires_procurement_check: "Needs procurement confirmation",
+    contact_supplier: "Supplier confirmation required",
   };
   return labels[status];
+}
+
+function humanizeProcurementStatus(status: MaterialItem["procurement_status"]) {
+  const labels: Record<MaterialItem["procurement_status"], string> = {
+    verified: "Source-backed availability",
+    requires_procurement_check: "Needs procurement confirmation",
+  };
+  return labels[status];
+}
+
+function humanizeBudgetLine(item: MaterialItem) {
+  return item.requires_procurement_check ? "needs procurement confirmation" : "sourcing confirmed";
 }
 
 function humanizeNoveltySignal(signal: ExperimentPlan["literature_qc"]["novelty_signal"]) {
@@ -1309,6 +1364,17 @@ function FilterSelect({
       </select>
     </label>
   );
+}
+
+function compactSourceChipLabel(source: EvidenceSource | undefined, fallbackId: string) {
+  if (!source) {
+    return fallbackId;
+  }
+  const provider = source.source_name.replace(/^www\./, "");
+  if (provider.length <= 20) {
+    return provider;
+  }
+  return source.title.length <= 36 ? source.title : `${source.title.slice(0, 33)}...`;
 }
 
 function Input({
