@@ -1,0 +1,89 @@
+@startuml
+title SQLModel Database Model
+
+entity Run {
+  * id : str
+  --
+  hypothesis : str
+  preset_id : str?
+  status : str
+  review_state : ReviewState
+  evidence_mode : EvidenceMode
+  used_seed_data : bool
+  parsed_hypothesis_json : str?
+  literature_qc_json : str?
+  plan_json : str?
+  quality_summary_json : str?
+  created_at : datetime
+  updated_at : datetime
+}
+
+entity ConsensusCache {
+  * normalized_hypothesis : str
+  --
+  query : str
+  references_json : str
+  literature_synthesis : str?
+}
+
+entity EvidenceReplayCache {
+  * normalized_hypothesis : str
+  --
+  preset_id : str?
+  literature_qc_json : str
+  evidence_pack_json : str
+  source_run_id : str?
+}
+
+entity RunEvent {
+  * id : str
+  --
+  run_id : str
+  stage : str
+  status : str
+  message : str
+}
+
+entity ReviewSession {
+  * id : str
+  --
+  run_id : str
+  reviewer_name : str?
+  summary : str?
+  review_state : ReviewState
+}
+
+entity ReviewItem {
+  * id : str
+  --
+  review_session_id : str
+  target_type : str
+  target_key : str
+  action : str
+  comment : str?
+  replacement_text : str?
+  confidence_override : float?
+}
+
+entity RunRevision {
+  * child_run_id : str
+  --
+  parent_run_id : str
+  revision_number : int
+}
+
+entity PresentationAnchor {
+  * label : str
+  --
+  run_id : str
+}
+
+Run ||--o{ RunEvent
+Run ||--o{ ReviewSession
+ReviewSession ||--o{ ReviewItem
+Run ||--o{ RunRevision : parent
+Run ||--|| RunRevision : child
+Run ||--o| PresentationAnchor
+Run ||..o{ EvidenceReplayCache : source_run_id
+
+@enduml

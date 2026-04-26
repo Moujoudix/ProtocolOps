@@ -1,0 +1,13 @@
+@startuml
+title ProtocolOps Planning Workflow
+
+start
+:Natural-language hypothesis;
+:OpenAI structured parse;
+:Literature QC;
+:EvidencePack construction;
+:OpenAI plan generation;
+:UI review, sources, exports, review memory;
+stop
+
+@enduml

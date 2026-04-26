@@ -1,0 +1,27 @@
+@startuml
+title ProtocolOps API Map
+
+package "Root" {
+  [GET /health]
+}
+
+package "/api" {
+  [GET /api/presets]
+  [GET /api/readiness]
+  [GET /api/runs]
+  [POST /api/literature-qc]
+  [POST /api/runs/{run_id}/plan]
+  [GET /api/runs/{run_id}]
+  [GET /api/runs/{run_id}/events]
+  [GET /api/runs/{run_id}/reviews]
+  [POST /api/runs/{run_id}/reviews]
+  [POST /api/runs/{run_id}/revise]
+  [GET /api/runs/{run_id}/comparison]
+  [POST /api/runs/{run_id}/presentation-anchor]
+  [GET /api/runs/{run_id}/export/json]
+  [GET /api/runs/{run_id}/export/citations]
+  [GET /api/runs/{run_id}/export/procurement]
+  [GET /api/runs/{run_id}/export/pdf]
+}
+
+@enduml

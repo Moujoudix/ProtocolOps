@@ -1,0 +1,35 @@
+[
+  {
+    "provider": "Consensus",
+    "attempted": true,
+    "succeeded": true,
+    "cached": true,
+    "stage": "literature_qc",
+    "fallback_used": false,
+    "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+    "result_count": 0,
+    "error": null
+  },
+  {
+    "provider": "Semantic Scholar",
+    "attempted": true,
+    "succeeded": false,
+    "cached": false,
+    "stage": "literature_qc",
+    "fallback_used": false,
+    "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+    "result_count": 0,
+    "error": "Client error '429 ' for url 'https://api.semanticscholar.org/graph/v1/paper/search?query=HeLa+cell+cryopreservation+trehalose+sucrose+DMSO+viability+trehalose+as+cryoprotectant+membrane+stabilization+low+temperature+post-thaw+viability+HeLa+cells+trehalose+versus+DMSO+cell+freezing+medium+trehalose+cryoprotectant&limit=5&fields=title%2Curl%2Cabstract%2Cyear%2Cauthors%2CexternalIds%2Cvenue%2CpublicationDate%2CcitationCount%2CopenAccessPdf%2CpublicationTypes'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+  },
+  {
+    "provider": "Europe PMC",
+    "attempted": true,
+    "succeeded": true,
+    "cached": false,
+    "stage": "literature_qc",
+    "fallback_used": false,
+    "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+    "result_count": 5,
+    "error": null
+  }
+]

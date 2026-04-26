@@ -1,0 +1,44 @@
+{
+  "strict_live_mode": true,
+  "evidence_mode": "strict_live",
+  "live_ready": true,
+  "cached_live_available": true,
+  "seeded_demo_available": true,
+  "providers": [
+    {
+      "provider": "OpenAI",
+      "status": "ready",
+      "detail": "Structured parsing and plan generation",
+      "configured": true,
+      "authenticated": true
+    },
+    {
+      "provider": "Consensus",
+      "status": "ready",
+      "detail": "Consensus OAuth cache detected",
+      "configured": true,
+      "authenticated": true
+    },
+    {
+      "provider": "Tavily",
+      "status": "ready",
+      "detail": "Supplier discovery and extract",
+      "configured": true,
+      "authenticated": true
+    },
+    {
+      "provider": "protocols.io",
+      "status": "ready",
+      "detail": "Protocol repository access",
+      "configured": true,
+      "authenticated": true
+    },
+    {
+      "provider": "Semantic Scholar",
+      "status": "public_mode",
+      "detail": "Public API mode",
+      "configured": true,
+      "authenticated": false
+    }
+  ]
+}

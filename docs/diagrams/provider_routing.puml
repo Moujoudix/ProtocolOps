@@ -1,0 +1,50 @@
+@startuml
+title Provider Routing by Domain
+
+skinparam packageStyle rectangle
+
+package "cell_biology" {
+  [Consensus]
+  [Semantic Scholar]
+  [Europe PMC]
+  [NCBI fallback]
+  [ATCC / Thermo / Promega / Sigma]
+  [protocols.io]
+  [OpenWetWare]
+}
+
+package "diagnostics_biosensor" {
+  [Consensus]
+  [Semantic Scholar]
+  [Europe PMC]
+  [arXiv fallback]
+  [NCBI biomedical fallback]
+  [Tavily supplier search]
+  [protocols.io]
+}
+
+package "animal_gut_health" {
+  [Consensus]
+  [Semantic Scholar]
+  [Europe PMC]
+  [NCBI fallback]
+  [protocols.io]
+  [OpenWetWare fallback]
+}
+
+package "microbial_electrochemistry" {
+  [Consensus]
+  [Semantic Scholar]
+  [Europe PMC]
+  [arXiv fallback]
+  [protocols.io]
+  [supplier search if explicit need]
+}
+
+note bottom
+Semantic Scholar and Europe PMC are always primary Literature QC providers.
+NCBI and arXiv are route-specific fallbacks.
+EvidencePack then adds protocol, supplier, standards, and inferred layers.
+end note
+
+@enduml

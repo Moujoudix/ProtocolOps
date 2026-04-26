@@ -1,0 +1,12 @@
+- Murray KA, Gibson MI. (2022). Chemical approaches to cryopreservation.. https://europepmc.org/article/MED/35875681
+- Linkova DD, Rubtsova YP, Egorikhina MN. (2022). Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.. https://europepmc.org/article/MED/36078098
+- Unknown authors (2025). EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.. https://europepmc.org/article/MED/40498965
+- Unknown authors (2024). Posters. https://europepmc.org/article/PMC/PMC11208286
+- Unknown authors (2023). The 7th Congress of Biophysicists of Russia - conference proceedings : Abstracts. https://europepmc.org/article/PMC/PMC10643713
+- Unknown authors (n.d.). HeLa - CCL-2 - ATCC. https://www.atcc.org/products/ccl-2
+- Unknown authors (n.d.). Cell Freezing Protocols | Thermo Fisher Scientific - US. https://www.thermofisher.com/us/en/home/references/gibco-cell-culture-basics/cell-culture-protocols/freezing-cells.html
+- Unknown authors (n.d.). CellTiter-Glo® Luminescent Cell Viability Assay Protocol. https://worldwide.promega.com/resources/protocols/technical-bulletins/0/celltiter-glo-luminescent-cell-viability-assay-protocol/
+- Unknown authors (n.d.). Trehalose - Sigma-Aldrich. https://www.sigmaaldrich.com/US/en/search/trehalose?focus=products&page=1&perpage=30&sort=relevance&term=trehalose&type=product_name&srsltid=AfmBOoqi-xY4dvgcE5zDG8a5O6hrswAsYt-1yYg9g_BYaC2VzrwWFoPf
+- Unknown authors (n.d.). Trehalose | Sigma-Aldrich. https://www.sigmaaldrich.com/IN/en/search/trehalose?focus=products&page=1&perpage=30&sort=relevance&term=%20Trehalose&type=product&srsltid=AfmBOoqtpS7S3GO8Vjk-bx53wcRoFRr6zthA_iQFUy6hEXF8TldXcE2m
+- Unknown authors (n.d.). BMBL biosafety checklist for human cell lines and BSL-2 handling. https://www.cdc.gov/labs/BMBL.html
+- Unknown authors (n.d.). cell biology assumptions requiring expert review. URL not available

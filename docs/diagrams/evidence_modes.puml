@@ -1,0 +1,29 @@
+@startuml
+title Evidence Modes and Run Outcomes
+
+left to right direction
+
+rectangle "Configured evidence modes" as Config {
+  strict_live
+  cached_live
+  seeded_demo
+}
+
+rectangle "Realized run outcomes" as Outcome {
+  fully_live
+  degraded_live
+  demo_fallback
+}
+
+strict_live --> fully_live : all required live providers succeed
+strict_live --> degraded_live : live run completes,\nprovider partially fails
+strict_live --> "hard failure" : required evidence missing\nand seeded fallback would be needed
+cached_live --> degraded_live : replayed prior live artifacts\nfor stable demo
+seeded_demo --> demo_fallback : deterministic fallback
+
+note bottom
+`degraded_live` is a run outcome, not a configured evidence mode.
+`cached_live` is a configured replay mode.
+end note
+
+@enduml

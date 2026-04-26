@@ -1,0 +1,11 @@
+name,vendor,catalog_number,procurement_status,price_status,notes
+HeLa cells,ATCC,,requires_procurement_check,contact_supplier,"ATCC HeLa product page was retrieved, but catalog number and price were not captured in the evidence pack and are left null."
+Trehalose,Sigma-Aldrich,,requires_procurement_check,contact_supplier,"Supplier search evidence confirms product availability, but no exact grade, catalog number, or price was retrieved."
+"DMSO, cell culture grade",,,requires_procurement_check,requires_procurement_check,"General freezing protocol support was retrieved, but no specific DMSO product page was captured."
+Sucrose,,,requires_procurement_check,requires_procurement_check,Included only if the lab adds a sucrose-matched arm; no supplier page was retrieved in the evidence pack.
+Routine HeLa culture medium and supplements,,,requires_procurement_check,requires_procurement_check,Use supplier-recommended or locally validated HeLa culture reagents; exact formulations not extracted here.
+Cryovials,,,requires_procurement_check,requires_procurement_check,Generic consumable; exact product not retrieved.
+Controlled-rate freezing device or approved passive freezing container,,,requires_procurement_check,requires_procurement_check,Specific device not retrieved; use existing local validated equipment.
+CellTiter-Glo viability assay reagent,Promega,,requires_procurement_check,contact_supplier,"Supplier protocol was retrieved, but specific kit size, catalog number, and price were not captured."
+Plate reader,,,requires_procurement_check,requires_procurement_check,Instrument required if ATP-based viability assay is selected.
+PPE and cryogenic safety supplies,,,requires_procurement_check,requires_procurement_check,"Use gloves, eye protection, and cryogenic handling equipment according to institutional biosafety and LN2 procedures."

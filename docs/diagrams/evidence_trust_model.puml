@@ -1,0 +1,32 @@
+@startuml
+title Evidence Trust Model
+
+rectangle "Trust levels" as Trust {
+  high
+  medium
+  low
+}
+
+rectangle "Evidence classes" as Evidence {
+  exact_match
+  close_match
+  adjacent_method
+  generic_method
+  supplier_reference
+  safety_or_standard
+  assumption
+}
+
+rectangle "Behavior" as Behavior {
+  exact_match / close_match -> can be source-backed
+  adjacent_method -> expert_review_required
+  generic_method -> expert_review_required
+  supplier_reference -> supports materials / ops context
+  safety_or_standard -> supports risks / checklists
+  assumption -> expert_review_required
+}
+
+Trust --> Evidence
+Evidence --> Behavior
+
+@enduml

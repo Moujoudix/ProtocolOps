@@ -1,0 +1,14 @@
+@startuml
+title Review Memory Loop
+
+start
+:Generate review-ready experiment plan;
+:Scientist submits structured review;
+:Persist review session and review items;
+:Tag corrections by target type and action;
+:Future similar run retrieves ranked memory;
+:Memory applied during prompt-time generation;
+:UI shows memory applied and revised comparison;
+stop
+
+@enduml

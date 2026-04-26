@@ -17,8 +17,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         yield
 
     app = FastAPI(
-        title="AI Scientist MVP",
-        description="Evidence-grounded experiment planning from hypothesis to review-ready plan.",
+        title="ProtocolOps",
+        description="Evidence-grounded review-ready experiment planning from hypothesis to operational plan for expert review.",
         version="0.1.0",
         lifespan=lifespan,
     )

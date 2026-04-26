@@ -336,7 +336,7 @@ export default function App() {
               <FlaskConical className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-normal">ProtocolOps AI</h1>
+              <h1 className="text-lg font-semibold tracking-normal">ProtocolOps</h1>
               <p className="text-sm text-zinc-500">Review-ready experiment planning workspace</p>
             </div>
           </div>

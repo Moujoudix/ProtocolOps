@@ -1,0 +1,44 @@
+@startuml
+title ProtocolOps Architecture
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor Scientist
+
+rectangle "Frontend\nReact + Vite + TypeScript" as Frontend
+rectangle "Backend\nFastAPI + services" as Backend
+database "SQLite\nSQLModel" as DB
+cloud "OpenAI API" as OpenAI
+rectangle "Consensus bridge\nbackend/consensus_bridge" as Bridge
+cloud "Consensus MCP" as Consensus
+cloud "Semantic Scholar" as S2
+cloud "Europe PMC" as EPMC
+cloud "NCBI E-utilities" as NCBI
+cloud "arXiv" as Arxiv
+cloud "protocols.io" as PIO
+cloud "OpenWetWare" as OWW
+cloud "Tavily Search / Extract" as Tavily
+cloud "ATCC / Thermo / Promega / Sigma" as Suppliers
+rectangle "Exports\nJSON / citations / procurement / PDF" as Exports
+rectangle "Review memory\nsessions + items + revisions" as Memory
+
+Scientist --> Frontend
+Frontend --> Backend
+Backend --> DB
+Backend --> OpenAI
+Backend --> Bridge
+Bridge --> Consensus
+Backend --> S2
+Backend --> EPMC
+Backend --> NCBI
+Backend --> Arxiv
+Backend --> PIO
+Backend --> OWW
+Backend --> Tavily
+Tavily --> Suppliers
+Backend --> Exports
+Memory --> DB
+Backend --> Memory
+
+@enduml

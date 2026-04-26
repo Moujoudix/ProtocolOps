@@ -1,0 +1,1209 @@
+{
+  "run_id": "d4f6d470-5c47-4568-9eac-019815a80bb3",
+  "hypothesis": "Replacing sucrose with trehalose as a cryoprotectant in the freezing medium will increase post-thaw viability of HeLa cells by at least 15 percentage points compared to the standard DMSO protocol, due to trehalose\u2019s superior membrane stabilization at low temperatures.",
+  "preset_id": "hela-trehalose",
+  "status": "plan_complete",
+  "review_state": "generated",
+  "run_mode": "degraded_live",
+  "evidence_mode": "strict_live",
+  "used_seed_data": false,
+  "is_presentation_anchor": false,
+  "parent_run_id": null,
+  "revision_number": 0,
+  "parsed_hypothesis": {
+    "original_text": "Replacing sucrose with trehalose as a cryoprotectant in the freezing medium will increase post-thaw viability of HeLa cells by at least 15 percentage points compared to the standard DMSO protocol, due to trehalose\u2019s superior membrane stabilization at low temperatures.",
+    "domain": "cell biology",
+    "domain_route": "cell_biology",
+    "scientific_system": "cell culture cryopreservation",
+    "model_or_organism": "HeLa cells",
+    "intervention": "Use trehalose instead of sucrose as a cryoprotectant in the freezing medium",
+    "comparator": "Standard DMSO cryopreservation protocol",
+    "outcome_metric": "Post-thaw cell viability (%)",
+    "success_threshold": "At least 15 percentage point increase in post-thaw viability versus comparator",
+    "mechanism": "Trehalose-mediated membrane stabilization at low temperatures",
+    "literature_query_terms": [
+      "HeLa cell cryopreservation trehalose sucrose DMSO viability",
+      "trehalose as cryoprotectant membrane stabilization low temperature",
+      "post-thaw viability HeLa cells trehalose versus DMSO",
+      "cell freezing medium trehalose cryoprotectant"
+    ],
+    "protocol_query_terms": [
+      "HeLa cell cryopreservation protocol trehalose",
+      "trehalose freezing medium formulation cells",
+      "post-thaw viability assay HeLa cells",
+      "cryopreservation comparison trehalose DMSO"
+    ],
+    "supplier_material_query_terms": [
+      "trehalose cryoprotectant cell culture grade",
+      "HeLa cell culture cryopreservation reagents",
+      "DMSO cell culture grade",
+      "cell viability assay reagents"
+    ],
+    "organism_or_system": "HeLa cell culture system",
+    "outcome": "Higher post-thaw viability after freezing",
+    "effect_size": ">=15 percentage points increase",
+    "key_terms": [
+      "HeLa",
+      "trehalose",
+      "sucrose",
+      "DMSO",
+      "cryoprotectant",
+      "cryopreservation",
+      "post-thaw viability",
+      "membrane stabilization"
+    ],
+    "safety_notes": [
+      "Use standard biosafety practices for handling HeLa cells and cryogenic materials.",
+      "DMSO can facilitate skin absorption of dissolved compounds; handle with gloves.",
+      "Liquid nitrogen and cryogenic storage pose cold-burn and pressure hazards."
+    ]
+  },
+  "literature_qc": {
+    "novelty_signal": "exact_match_found",
+    "confidence": 0.7833333333333334,
+    "references": [
+      {
+        "id": "epmc-f9506ec8097d",
+        "source_name": "Europe PMC",
+        "title": "Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.",
+        "url": "https://europepmc.org/article/MED/36078098",
+        "evidence_type": "exact_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Mesenchymal stem cells (MSCs) manifest vast opportunities for clinical use due both to their ability for self-renewal and for effecting paracrine therapeutic benefits. At the same time, difficulties with non-recurrent generation of large numbers of cells due to the necessity for long-term MSC expansion ex vivo, or the requirement for repeated sampling of biological material from a patient significantly limits the current use of MSCs in clinical practice. One solution to these problems entails the creation of a biobank using cell cryopreservation technology. This review is aimed at analyzing a...",
+        "authors": [
+          "Linkova DD",
+          "Rubtsova YP",
+          "Egorikhina MN."
+        ],
+        "year": 2022,
+        "doi": "10.3390/cells11172691",
+        "confidence": 0.79,
+        "retrieved_at": "2026-04-26T11:44:09.467472Z"
+      },
+      {
+        "id": "epmc-47aa272ead10",
+        "source_name": "Europe PMC",
+        "title": "Chemical approaches to cryopreservation.",
+        "url": "https://europepmc.org/article/MED/35875681",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Cryopreservation of cells and biologics underpins all biomedical research from routine sample storage to emerging cell-based therapies, as well as ensuring cell banks provide authenticated, stable and consistent cell products. This field began with the discovery and wide adoption of glycerol and dimethyl sulfoxide as cryoprotectants over 60 years ago, but these tools do not work for all cells and are not ideal for all workflows. In this Review, we highlight and critically review the approaches to discover, and apply, new chemical tools for cryopreservation. We summarize the key (and complex)...",
+        "authors": [
+          "Murray KA",
+          "Gibson MI."
+        ],
+        "year": 2022,
+        "doi": "10.1038/s41570-022-00407-4",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467375Z"
+      },
+      {
+        "id": "epmc-2313fb718ed5",
+        "source_name": "Europe PMC",
+        "title": "EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.",
+        "url": "https://europepmc.org/article/MED/40498965",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Abstracts submitted to the 'EACR 2025 Congress: Innovative Cancer Science', from 16-19 June 2025 and accepted by the Congress Organising Committee are published in this Supplement of Molecular Oncology, an affiliated journal of the European Association for Cancer Research (EACR).",
+        "authors": [],
+        "year": 2025,
+        "doi": "10.1002/1878-0261.70070",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467512Z"
+      }
+    ],
+    "literature_sources": [
+      {
+        "id": "epmc-47aa272ead10",
+        "source_name": "Europe PMC",
+        "title": "Chemical approaches to cryopreservation.",
+        "url": "https://europepmc.org/article/MED/35875681",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Cryopreservation of cells and biologics underpins all biomedical research from routine sample storage to emerging cell-based therapies, as well as ensuring cell banks provide authenticated, stable and consistent cell products. This field began with the discovery and wide adoption of glycerol and dimethyl sulfoxide as cryoprotectants over 60 years ago, but these tools do not work for all cells and are not ideal for all workflows. In this Review, we highlight and critically review the approaches to discover, and apply, new chemical tools for cryopreservation. We summarize the key (and complex)...",
+        "authors": [
+          "Murray KA",
+          "Gibson MI."
+        ],
+        "year": 2022,
+        "doi": "10.1038/s41570-022-00407-4",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467375Z"
+      },
+      {
+        "id": "epmc-f9506ec8097d",
+        "source_name": "Europe PMC",
+        "title": "Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.",
+        "url": "https://europepmc.org/article/MED/36078098",
+        "evidence_type": "exact_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Mesenchymal stem cells (MSCs) manifest vast opportunities for clinical use due both to their ability for self-renewal and for effecting paracrine therapeutic benefits. At the same time, difficulties with non-recurrent generation of large numbers of cells due to the necessity for long-term MSC expansion ex vivo, or the requirement for repeated sampling of biological material from a patient significantly limits the current use of MSCs in clinical practice. One solution to these problems entails the creation of a biobank using cell cryopreservation technology. This review is aimed at analyzing a...",
+        "authors": [
+          "Linkova DD",
+          "Rubtsova YP",
+          "Egorikhina MN."
+        ],
+        "year": 2022,
+        "doi": "10.3390/cells11172691",
+        "confidence": 0.79,
+        "retrieved_at": "2026-04-26T11:44:09.467472Z"
+      },
+      {
+        "id": "epmc-2313fb718ed5",
+        "source_name": "Europe PMC",
+        "title": "EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.",
+        "url": "https://europepmc.org/article/MED/40498965",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Abstracts submitted to the 'EACR 2025 Congress: Innovative Cancer Science', from 16-19 June 2025 and accepted by the Congress Organising Committee are published in this Supplement of Molecular Oncology, an affiliated journal of the European Association for Cancer Research (EACR).",
+        "authors": [],
+        "year": 2025,
+        "doi": "10.1002/1878-0261.70070",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467512Z"
+      },
+      {
+        "id": "epmc-0a24b434102a",
+        "source_name": "Europe PMC",
+        "title": "Posters",
+        "url": "https://europepmc.org/article/PMC/PMC11208286",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "No abstract returned by provider.",
+        "authors": [],
+        "year": 2024,
+        "doi": null,
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467540Z"
+      },
+      {
+        "id": "epmc-dba13c5b2b27",
+        "source_name": "Europe PMC",
+        "title": "The 7th Congress of Biophysicists of Russia - conference proceedings : Abstracts",
+        "url": "https://europepmc.org/article/PMC/PMC10643713",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "No abstract returned by provider.",
+        "authors": [],
+        "year": 2023,
+        "doi": null,
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467568Z"
+      }
+    ],
+    "searched_sources": [
+      "Consensus",
+      "Semantic Scholar",
+      "Europe PMC"
+    ],
+    "provider_trace": [
+      {
+        "provider": "Consensus",
+        "attempted": true,
+        "succeeded": true,
+        "cached": true,
+        "stage": "literature_qc",
+        "fallback_used": false,
+        "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+        "result_count": 0,
+        "error": null
+      },
+      {
+        "provider": "Semantic Scholar",
+        "attempted": true,
+        "succeeded": false,
+        "cached": false,
+        "stage": "literature_qc",
+        "fallback_used": false,
+        "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+        "result_count": 0,
+        "error": "Client error '429 ' for url 'https://api.semanticscholar.org/graph/v1/paper/search?query=HeLa+cell+cryopreservation+trehalose+sucrose+DMSO+viability+trehalose+as+cryoprotectant+membrane+stabilization+low+temperature+post-thaw+viability+HeLa+cells+trehalose+versus+DMSO+cell+freezing+medium+trehalose+cryoprotectant&limit=5&fields=title%2Curl%2Cabstract%2Cyear%2Cauthors%2CexternalIds%2Cvenue%2CpublicationDate%2CcitationCount%2CopenAccessPdf%2CpublicationTypes'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+      },
+      {
+        "provider": "Europe PMC",
+        "attempted": true,
+        "succeeded": true,
+        "cached": false,
+        "stage": "literature_qc",
+        "fallback_used": false,
+        "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+        "result_count": 5,
+        "error": null
+      }
+    ],
+    "rationale": "At least one searched source appears to match the system, intervention, comparator, and outcome or method requested.",
+    "literature_synthesis": "Found 20 papers, showing top 20.\n\n[1] [Trehalose in cryopreservation. Applications, mechanisms and intracellular delivery opportunities](https://consensus.app/papers/details/acc64fdaea785f4abdc1b247ab1eaa69/?utm_source=claude_desktop) (Alex Murray et al., 2024, 20 citations, RSC Medicinal Chemistry)\n  Cryopreservation is crucial to fields including immune and stem cell therapies, reproductive technology, blood banking, regenerative medicine and across all biotechnology. During cryopreservation, cryoprotectants are essential to protect cells from the damage caused by exposure to freezing temperatures. The most common penetrating cryoprotectants, such as DMSO and glycerol do not give full recovery and have a cytotoxicity limit on the concentration which can be applied. The non-reducing disaccharide trehalose has been widely explored and used to supplement these, inspired by its use in nature to aid survival at extreme temperatures and/or desiccation. However, trehalose has challenges to its use, particular its low membrane permeability, and how its protective role compares to other sugars. Here we review the application of trehalose and its reported benefit and seek to show where che",
+    "gaps": [
+      "Do not interpret this as an exhaustive novelty review; it only covers the configured searched sources.",
+      "Use 'not found in searched sources' rather than claiming the work has never been done."
+    ],
+    "evidence_gap_warnings": [
+      "Do not interpret this as an exhaustive novelty review; it only covers the configured searched sources.",
+      "Use 'not found in searched sources' rather than claiming the work has never been done."
+    ]
+  },
+  "plan": {
+    "plan_title": "Review-ready experimental plan: Trehalose versus standard DMSO cryopreservation for post-thaw viability of HeLa cells",
+    "status_label": "SOP draft for expert review",
+    "quality_summary": {
+      "literature_confidence": 0.7833333333333334,
+      "protocol_confidence": 0.5057142857142857,
+      "materials_confidence": 0.536,
+      "budget_confidence": 0.6575,
+      "evidence_completeness": 0.7250000000000001,
+      "operational_readiness": 0.4476702380952381,
+      "review_burden": 1.0
+    },
+    "memory_applied": [],
+    "overview": {
+      "title": "Objective and decision frame",
+      "summary": "Evaluate whether replacing sucrose with trehalose in a HeLa cryopreservation medium improves post-thaw viability relative to a standard DMSO-based comparator, with success defined as a >=15 percentage point increase in viability. Literature support exists for trehalose as a cryoprotectant and membrane-stabilizing sugar, but the retrieved evidence pack does not provide a validated HeLa-specific trehalose-versus-sucrose freezing formulation or exact operational parameters. Therefore, this plan is structured as a controlled comparison framework requiring expert review before execution.",
+      "bullets": [
+        "Primary endpoint: post-thaw cell viability (%).",
+        "Primary comparison: trehalose-containing freezing condition versus standard DMSO comparator.",
+        "Mechanistic rationale from literature: trehalose may improve membrane stabilization during freezing, but intracellular delivery and membrane permeability limitations are known considerations.",
+        "Key evidence gap: no exact retrieved protocol specifying HeLa freezing medium composition, trehalose concentration, sucrose concentration, cooling rate, or thaw timing for this comparison.",
+        "Because exact validated parameters were not retrieved, formulation and handling details remain expert-review-required."
+      ],
+      "evidence_source_ids": [
+        "epmc-47aa272ead10",
+        "epmc-f9506ec8097d",
+        "tavily-extract-dc2b45296632",
+        "tavily-extract-f59a7806cded",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.7,
+      "expert_review_required": true
+    },
+    "literature_qc": {
+      "novelty_signal": "exact_match_found",
+      "confidence": 0.7833333333333334,
+      "references": [
+        {
+          "id": "epmc-f9506ec8097d",
+          "source_name": "Europe PMC",
+          "title": "Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.",
+          "url": "https://europepmc.org/article/MED/36078098",
+          "evidence_type": "exact_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Mesenchymal stem cells (MSCs) manifest vast opportunities for clinical use due both to their ability for self-renewal and for effecting paracrine therapeutic benefits. At the same time, difficulties with non-recurrent generation of large numbers of cells due to the necessity for long-term MSC expansion ex vivo, or the requirement for repeated sampling of biological material from a patient significantly limits the current use of MSCs in clinical practice. One solution to these problems entails the creation of a biobank using cell cryopreservation technology. This review is aimed at analyzing a...",
+          "authors": [
+            "Linkova DD",
+            "Rubtsova YP",
+            "Egorikhina MN."
+          ],
+          "year": 2022,
+          "doi": "10.3390/cells11172691",
+          "confidence": 0.79,
+          "retrieved_at": "2026-04-26T11:44:09.467472Z"
+        },
+        {
+          "id": "epmc-47aa272ead10",
+          "source_name": "Europe PMC",
+          "title": "Chemical approaches to cryopreservation.",
+          "url": "https://europepmc.org/article/MED/35875681",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Cryopreservation of cells and biologics underpins all biomedical research from routine sample storage to emerging cell-based therapies, as well as ensuring cell banks provide authenticated, stable and consistent cell products. This field began with the discovery and wide adoption of glycerol and dimethyl sulfoxide as cryoprotectants over 60 years ago, but these tools do not work for all cells and are not ideal for all workflows. In this Review, we highlight and critically review the approaches to discover, and apply, new chemical tools for cryopreservation. We summarize the key (and complex)...",
+          "authors": [
+            "Murray KA",
+            "Gibson MI."
+          ],
+          "year": 2022,
+          "doi": "10.1038/s41570-022-00407-4",
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467375Z"
+        },
+        {
+          "id": "epmc-2313fb718ed5",
+          "source_name": "Europe PMC",
+          "title": "EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.",
+          "url": "https://europepmc.org/article/MED/40498965",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Abstracts submitted to the 'EACR 2025 Congress: Innovative Cancer Science', from 16-19 June 2025 and accepted by the Congress Organising Committee are published in this Supplement of Molecular Oncology, an affiliated journal of the European Association for Cancer Research (EACR).",
+          "authors": [],
+          "year": 2025,
+          "doi": "10.1002/1878-0261.70070",
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467512Z"
+        }
+      ],
+      "literature_sources": [
+        {
+          "id": "epmc-47aa272ead10",
+          "source_name": "Europe PMC",
+          "title": "Chemical approaches to cryopreservation.",
+          "url": "https://europepmc.org/article/MED/35875681",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Cryopreservation of cells and biologics underpins all biomedical research from routine sample storage to emerging cell-based therapies, as well as ensuring cell banks provide authenticated, stable and consistent cell products. This field began with the discovery and wide adoption of glycerol and dimethyl sulfoxide as cryoprotectants over 60 years ago, but these tools do not work for all cells and are not ideal for all workflows. In this Review, we highlight and critically review the approaches to discover, and apply, new chemical tools for cryopreservation. We summarize the key (and complex)...",
+          "authors": [
+            "Murray KA",
+            "Gibson MI."
+          ],
+          "year": 2022,
+          "doi": "10.1038/s41570-022-00407-4",
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467375Z"
+        },
+        {
+          "id": "epmc-f9506ec8097d",
+          "source_name": "Europe PMC",
+          "title": "Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.",
+          "url": "https://europepmc.org/article/MED/36078098",
+          "evidence_type": "exact_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Mesenchymal stem cells (MSCs) manifest vast opportunities for clinical use due both to their ability for self-renewal and for effecting paracrine therapeutic benefits. At the same time, difficulties with non-recurrent generation of large numbers of cells due to the necessity for long-term MSC expansion ex vivo, or the requirement for repeated sampling of biological material from a patient significantly limits the current use of MSCs in clinical practice. One solution to these problems entails the creation of a biobank using cell cryopreservation technology. This review is aimed at analyzing a...",
+          "authors": [
+            "Linkova DD",
+            "Rubtsova YP",
+            "Egorikhina MN."
+          ],
+          "year": 2022,
+          "doi": "10.3390/cells11172691",
+          "confidence": 0.79,
+          "retrieved_at": "2026-04-26T11:44:09.467472Z"
+        },
+        {
+          "id": "epmc-2313fb718ed5",
+          "source_name": "Europe PMC",
+          "title": "EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.",
+          "url": "https://europepmc.org/article/MED/40498965",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "Abstracts submitted to the 'EACR 2025 Congress: Innovative Cancer Science', from 16-19 June 2025 and accepted by the Congress Organising Committee are published in this Supplement of Molecular Oncology, an affiliated journal of the European Association for Cancer Research (EACR).",
+          "authors": [],
+          "year": 2025,
+          "doi": "10.1002/1878-0261.70070",
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467512Z"
+        },
+        {
+          "id": "epmc-0a24b434102a",
+          "source_name": "Europe PMC",
+          "title": "Posters",
+          "url": "https://europepmc.org/article/PMC/PMC11208286",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "No abstract returned by provider.",
+          "authors": [],
+          "year": 2024,
+          "doi": null,
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467540Z"
+        },
+        {
+          "id": "epmc-dba13c5b2b27",
+          "source_name": "Europe PMC",
+          "title": "The 7th Congress of Biophysicists of Russia - conference proceedings : Abstracts",
+          "url": "https://europepmc.org/article/PMC/PMC10643713",
+          "evidence_type": "close_match",
+          "trust_tier": "literature_database",
+          "trust_level": "high",
+          "snippet": "No abstract returned by provider.",
+          "authors": [],
+          "year": 2023,
+          "doi": null,
+          "confidence": 0.66,
+          "retrieved_at": "2026-04-26T11:44:09.467568Z"
+        }
+      ],
+      "searched_sources": [
+        "Consensus",
+        "Semantic Scholar",
+        "Europe PMC"
+      ],
+      "provider_trace": [
+        {
+          "provider": "Consensus",
+          "attempted": true,
+          "succeeded": true,
+          "cached": true,
+          "stage": "literature_qc",
+          "fallback_used": false,
+          "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+          "result_count": 0,
+          "error": null
+        },
+        {
+          "provider": "Semantic Scholar",
+          "attempted": true,
+          "succeeded": false,
+          "cached": false,
+          "stage": "literature_qc",
+          "fallback_used": false,
+          "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+          "result_count": 0,
+          "error": "Client error '429 ' for url 'https://api.semanticscholar.org/graph/v1/paper/search?query=HeLa+cell+cryopreservation+trehalose+sucrose+DMSO+viability+trehalose+as+cryoprotectant+membrane+stabilization+low+temperature+post-thaw+viability+HeLa+cells+trehalose+versus+DMSO+cell+freezing+medium+trehalose+cryoprotectant&limit=5&fields=title%2Curl%2Cabstract%2Cyear%2Cauthors%2CexternalIds%2Cvenue%2CpublicationDate%2CcitationCount%2CopenAccessPdf%2CpublicationTypes'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+        },
+        {
+          "provider": "Europe PMC",
+          "attempted": true,
+          "succeeded": true,
+          "cached": false,
+          "stage": "literature_qc",
+          "fallback_used": false,
+          "query": "HeLa cell cryopreservation trehalose sucrose DMSO viability trehalose as cryoprotectant membrane stabilization low temperature post-thaw viability HeLa cells trehalose versus DMSO cell freezing medium trehalose cryoprotectant",
+          "result_count": 5,
+          "error": null
+        }
+      ],
+      "rationale": "At least one searched source appears to match the system, intervention, comparator, and outcome or method requested.",
+      "literature_synthesis": "Found 20 papers, showing top 20.\n\n[1] [Trehalose in cryopreservation. Applications, mechanisms and intracellular delivery opportunities](https://consensus.app/papers/details/acc64fdaea785f4abdc1b247ab1eaa69/?utm_source=claude_desktop) (Alex Murray et al., 2024, 20 citations, RSC Medicinal Chemistry)\n  Cryopreservation is crucial to fields including immune and stem cell therapies, reproductive technology, blood banking, regenerative medicine and across all biotechnology. During cryopreservation, cryoprotectants are essential to protect cells from the damage caused by exposure to freezing temperatures. The most common penetrating cryoprotectants, such as DMSO and glycerol do not give full recovery and have a cytotoxicity limit on the concentration which can be applied. The non-reducing disaccharide trehalose has been widely explored and used to supplement these, inspired by its use in nature to aid survival at extreme temperatures and/or desiccation. However, trehalose has challenges to its use, particular its low membrane permeability, and how its protective role compares to other sugars. Here we review the application of trehalose and its reported benefit and seek to show where che",
+      "gaps": [
+        "Do not interpret this as an exhaustive novelty review; it only covers the configured searched sources.",
+        "Use 'not found in searched sources' rather than claiming the work has never been done."
+      ],
+      "evidence_gap_warnings": [
+        "Do not interpret this as an exhaustive novelty review; it only covers the configured searched sources.",
+        "Use 'not found in searched sources' rather than claiming the work has never been done."
+      ]
+    },
+    "study_design": {
+      "title": "Comparative cryopreservation study design",
+      "summary": "Run a parallel, controlled comparison using authenticated HeLa cells prepared from the same pre-freeze culture batch. Include at minimum a standard DMSO comparator and one trehalose test condition; if the laboratory standard includes sucrose, include a matched sucrose-containing condition to directly test replacement. Use a predefined post-thaw viability assay and consistent recovery workflow across all arms.",
+      "bullets": [
+        "Use a single HeLa source and harmonized culture state before freezing to reduce biological variability.",
+        "Comparator arm: laboratory standard DMSO cryopreservation condition.",
+        "Test arm: DMSO-containing or alternative freezing medium incorporating trehalose, with exact formulation to be expert approved based on local SOP and available literature.",
+        "Optional additional arm for direct replacement claim: sucrose-containing freezing medium matched to the trehalose arm except for sugar identity.",
+        "Randomize vial allocation across conditions and thaw order where feasible.",
+        "Predefine acceptance criterion: trehalose arm exceeds comparator by >=15 percentage points in post-thaw viability.",
+        "Include multiple independent freeze-thaw replicates; exact replicate number not fixed here because no power basis was retrieved and requires statistical review.",
+        "Record secondary observations such as attachment, morphology, and short-term recovery if consistent with local SOP."
+      ],
+      "evidence_source_ids": [
+        "epmc-47aa272ead10",
+        "epmc-f9506ec8097d",
+        "tavily-extract-dc2b45296632",
+        "tavily-extract-f59a7806cded",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.58,
+      "expert_review_required": true
+    },
+    "protocol": [
+      {
+        "step_number": 1,
+        "title": "Confirm cell line identity, biosafety status, and starting culture suitability",
+        "purpose": "Ensure the experiment begins with an appropriate HeLa culture under compliant biosafety controls.",
+        "actions": [
+          "Obtain HeLa cells from a trusted supplier source.",
+          "Verify local records for cell line identity, passage history, contamination screening status, and handling approvals.",
+          "Culture cells under the supplier-recommended routine conditions from the authenticated source documentation and local SOP.",
+          "Use cultures judged healthy and in routine growth phase by laboratory criteria before preparing cryovials."
+        ],
+        "critical_parameters": [
+          "Exact passage window not retrieved; define per local cell banking SOP.",
+          "Mycoplasma test method and acceptance criteria require local SOP confirmation.",
+          "BSL-2 and human cell line handling controls should be confirmed before work begins."
+        ],
+        "materials": [
+          "HeLa cells",
+          "Routine HeLa culture reagents",
+          "Biosafety cabinet and standard cell culture PPE"
+        ],
+        "evidence_source_ids": [
+          "tavily-extract-dc2b45296632",
+          "standard-bmbl",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.73,
+        "expert_review_required": true,
+        "review_reason": "Exact acceptance criteria for culture state and contamination testing were not retrieved in the evidence pack."
+      },
+      {
+        "step_number": 2,
+        "title": "Define experimental arms and freeze-medium compositions",
+        "purpose": "Pre-register the comparison conditions without inventing unsupported formulations.",
+        "actions": [
+          "Document the laboratory standard DMSO cryopreservation medium currently used for HeLa cells.",
+          "Define the trehalose test medium intended to replace or supplement the sugar component in the freezing formulation.",
+          "If the hypothesis specifically concerns replacement of sucrose, add a sucrose arm matched to the trehalose arm except for sugar identity.",
+          "Submit all candidate formulations for expert review before preparing media."
+        ],
+        "critical_parameters": [
+          "Trehalose concentration not retrieved.",
+          "Sucrose concentration not retrieved.",
+          "DMSO percentage for comparator or test arm not retrieved from the evidence pack.",
+          "Serum or basal medium composition for freezing formulation not retrieved as validated for this specific comparison."
+        ],
+        "materials": [
+          "Trehalose reagent",
+          "Sucrose reagent if included",
+          "DMSO",
+          "Basal medium and/or serum per local freezing SOP"
+        ],
+        "evidence_source_ids": [
+          "epmc-47aa272ead10",
+          "epmc-f9506ec8097d",
+          "tavily-extract-f59a7806cded",
+          "tavily-extract-32c5d9321adc",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.38,
+        "expert_review_required": true,
+        "review_reason": "Exact HeLa-specific freezing formulations were not retrieved; concentrations and composition must not be invented."
+      },
+      {
+        "step_number": 3,
+        "title": "Prepare matched cell suspensions for cryovial filling",
+        "purpose": "Standardize the pre-freeze input across study arms.",
+        "actions": [
+          "Harvest a single upstream HeLa culture batch using the laboratory's routine dissociation and collection workflow.",
+          "Determine viable cell count using the laboratory's established counting method.",
+          "Normalize cell suspensions so each cryovial receives the same intended cell input across all conditions.",
+          "Mix cells with each reviewed freezing medium using a consistent order of addition and handling workflow across arms."
+        ],
+        "critical_parameters": [
+          "Target cell density per vial not retrieved.",
+          "Mixing order and equilibration duration before freezing not retrieved.",
+          "Temperature during preparation not retrieved."
+        ],
+        "materials": [
+          "HeLa cell suspension",
+          "Counting reagent or instrument",
+          "Prepared freezing media",
+          "Cryovials"
+        ],
+        "evidence_source_ids": [
+          "tavily-extract-f59a7806cded",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.41,
+        "expert_review_required": true,
+        "review_reason": "Cell density, equilibration, and preparation timings were not source-backed in the evidence pack."
+      },
+      {
+        "step_number": 4,
+        "title": "Freeze cryovials using a single controlled workflow",
+        "purpose": "Apply identical freezing handling across all arms so only formulation differs.",
+        "actions": [
+          "Aliquot matched cell suspensions into labeled cryovials for each study arm.",
+          "Freeze all vials using one locally approved controlled-rate or standard freezing workflow.",
+          "Transfer vials to long-term cryogenic storage only after completion of the approved freezing process.",
+          "Record all handling metadata, including operator, date, lot numbers, and storage locations."
+        ],
+        "critical_parameters": [
+          "Cooling rate not retrieved and must not be invented.",
+          "Intermediate hold temperature and duration not retrieved.",
+          "Duration of cryostorage before thaw comparison should be standardized but exact minimum duration was not retrieved."
+        ],
+        "materials": [
+          "Cryovials",
+          "Freezing container or controlled-rate freezer per local SOP",
+          "Cryogenic storage system"
+        ],
+        "evidence_source_ids": [
+          "tavily-extract-f59a7806cded",
+          "epmc-47aa272ead10",
+          "standard-bmbl",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.44,
+        "expert_review_required": true,
+        "review_reason": "Freezing-rate and storage-duration parameters were not directly retrieved for this comparison."
+      },
+      {
+        "step_number": 5,
+        "title": "Thaw vials under a harmonized post-storage workflow",
+        "purpose": "Minimize variability introduced during recovery and washing.",
+        "actions": [
+          "Thaw vials one condition-balanced batch at a time using the laboratory's standard mammalian cell thaw workflow.",
+          "Transfer thawed contents into recovery medium using the same sequence for each condition.",
+          "Remove or dilute cryoprotectant according to local SOP consistently across arms.",
+          "Plate cells into comparable culture vessels for immediate viability measurement and short recovery monitoring if planned."
+        ],
+        "critical_parameters": [
+          "Thaw temperature and duration not retrieved.",
+          "Wash/centrifugation conditions not retrieved.",
+          "Post-thaw recovery interval before primary readout not retrieved and should be predefined by expert review."
+        ],
+        "materials": [
+          "Recovery medium",
+          "Culture vessels",
+          "Centrifuge if used",
+          "Pipettes and sterile consumables"
+        ],
+        "evidence_source_ids": [
+          "tavily-extract-f59a7806cded",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.39,
+        "expert_review_required": true,
+        "review_reason": "Exact thaw and wash conditions were not retrieved from the evidence pack."
+      },
+      {
+        "step_number": 6,
+        "title": "Measure post-thaw viability with a predefined assay",
+        "purpose": "Generate the primary endpoint in a consistent and auditable manner.",
+        "actions": [
+          "Select one primary viability method before starting the study.",
+          "If using an ATP-based assay such as CellTiter-Glo, follow the supplier protocol and keep readout timing uniform across all samples.",
+          "Optionally pair the primary assay with an orthogonal direct cell counting or dye-exclusion method if available in the laboratory.",
+          "Record raw values, normalization method, and any exclusion criteria prospectively."
+        ],
+        "critical_parameters": [
+          "Primary viability assay platform must be selected before execution.",
+          "Assay plate format, cell input, and read timing were not retrieved here and should follow supplier instructions and local validation.",
+          "If an orthogonal assay is used, decision rules for discordant results require prespecification."
+        ],
+        "materials": [
+          "Viability assay reagent",
+          "Plate reader if required",
+          "Assay plates and consumables"
+        ],
+        "evidence_source_ids": [
+          "tavily-extract-de7139078d73",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.63,
+        "expert_review_required": true,
+        "review_reason": "The evidence pack supports a general viability assay protocol, but the study-specific assay settings were not retrieved."
+      },
+      {
+        "step_number": 7,
+        "title": "Analyze against the predefined success threshold",
+        "purpose": "Determine whether trehalose meets the claimed improvement target.",
+        "actions": [
+          "Calculate post-thaw viability for each vial or replicate unit using the prespecified method.",
+          "Summarize each condition with replicate-level data and condition-level descriptive statistics.",
+          "Compare the trehalose arm against the standard DMSO comparator, and if included, against the matched sucrose arm.",
+          "Assess whether the trehalose arm improves viability by at least 15 percentage points versus comparator.",
+          "Document deviations, failed vials, and any evidence of differential attachment or recovery that may affect interpretation."
+        ],
+        "critical_parameters": [
+          "Statistical test not fixed because replicate structure and distribution assumptions were not retrieved.",
+          "Outlier handling and exclusion rules require prospective definition.",
+          "Success threshold is fixed by hypothesis: >=15 percentage point increase versus comparator."
+        ],
+        "materials": [
+          "Analysis software or spreadsheet",
+          "Raw assay outputs",
+          "Study metadata records"
+        ],
+        "evidence_source_ids": [
+          "epmc-47aa272ead10",
+          "epmc-f9506ec8097d",
+          "assumption-d8728fd9b468"
+        ],
+        "confidence": 0.56,
+        "expert_review_required": true,
+        "review_reason": "Analysis framework is valid at a high level, but replicate design and statistical details need expert confirmation."
+      }
+    ],
+    "materials": [
+      {
+        "name": "HeLa cells",
+        "role": "Model cell line for cryopreservation comparison",
+        "vendor": "ATCC",
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "contact_supplier",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-dc2b45296632"
+        ],
+        "notes": "ATCC HeLa product page was retrieved, but catalog number and price were not captured in the evidence pack and are left null.",
+        "confidence": 0.72
+      },
+      {
+        "name": "Trehalose",
+        "role": "Test cryoprotective sugar",
+        "vendor": "Sigma-Aldrich",
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "contact_supplier",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-32c5d9321adc",
+          "tavily-extract-08fe74a8ee16"
+        ],
+        "notes": "Supplier search evidence confirms product availability, but no exact grade, catalog number, or price was retrieved.",
+        "confidence": 0.69
+      },
+      {
+        "name": "DMSO, cell culture grade",
+        "role": "Comparator cryoprotectant component",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-f59a7806cded",
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "General freezing protocol support was retrieved, but no specific DMSO product page was captured.",
+        "confidence": 0.48
+      },
+      {
+        "name": "Sucrose",
+        "role": "Optional matched comparator sugar if direct replacement arm is included",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "Included only if the lab adds a sucrose-matched arm; no supplier page was retrieved in the evidence pack.",
+        "confidence": 0.3
+      },
+      {
+        "name": "Routine HeLa culture medium and supplements",
+        "role": "Expansion and recovery of HeLa cells",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-dc2b45296632",
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "Use supplier-recommended or locally validated HeLa culture reagents; exact formulations not extracted here.",
+        "confidence": 0.5
+      },
+      {
+        "name": "Cryovials",
+        "role": "Storage vessel for freezing aliquots",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "Generic consumable; exact product not retrieved.",
+        "confidence": 0.29
+      },
+      {
+        "name": "Controlled-rate freezing device or approved passive freezing container",
+        "role": "Standardized freezing workflow",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-f59a7806cded",
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "Specific device not retrieved; use existing local validated equipment.",
+        "confidence": 0.4
+      },
+      {
+        "name": "CellTiter-Glo viability assay reagent",
+        "role": "Primary or optional post-thaw viability readout",
+        "vendor": "Promega",
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "contact_supplier",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-de7139078d73"
+        ],
+        "notes": "Supplier protocol was retrieved, but specific kit size, catalog number, and price were not captured.",
+        "confidence": 0.74
+      },
+      {
+        "name": "Plate reader",
+        "role": "Luminescence readout for ATP-based viability assay",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "tavily-extract-de7139078d73",
+          "assumption-d8728fd9b468"
+        ],
+        "notes": "Instrument required if ATP-based viability assay is selected.",
+        "confidence": 0.46
+      },
+      {
+        "name": "PPE and cryogenic safety supplies",
+        "role": "Safe handling of DMSO, human cell lines, and cryogenic materials",
+        "vendor": null,
+        "catalog_number": null,
+        "price": null,
+        "currency": null,
+        "procurement_status": "requires_procurement_check",
+        "price_status": "requires_procurement_check",
+        "requires_procurement_check": true,
+        "evidence_source_ids": [
+          "standard-bmbl"
+        ],
+        "notes": "Use gloves, eye protection, and cryogenic handling equipment according to institutional biosafety and LN2 procedures.",
+        "confidence": 0.78
+      }
+    ],
+    "budget": {
+      "title": "Budget summary",
+      "summary": "A complete costed budget cannot be validated from the retrieved evidence because no exact catalog numbers or visible prices were captured. Budgeting should therefore be completed through institutional procurement using the material list below.",
+      "items": [
+        {
+          "name": "HeLa cells",
+          "role": "Model cell line for cryopreservation comparison",
+          "vendor": "ATCC",
+          "catalog_number": null,
+          "price": null,
+          "currency": null,
+          "procurement_status": "requires_procurement_check",
+          "price_status": "contact_supplier",
+          "requires_procurement_check": true,
+          "evidence_source_ids": [
+            "tavily-extract-dc2b45296632"
+          ],
+          "notes": "Catalog number and current price not retrieved.",
+          "confidence": 0.72
+        },
+        {
+          "name": "Trehalose",
+          "role": "Test cryoprotective sugar",
+          "vendor": "Sigma-Aldrich",
+          "catalog_number": null,
+          "price": null,
+          "currency": null,
+          "procurement_status": "requires_procurement_check",
+          "price_status": "contact_supplier",
+          "requires_procurement_check": true,
+          "evidence_source_ids": [
+            "tavily-extract-32c5d9321adc"
+          ],
+          "notes": "Exact product grade and price not retrieved.",
+          "confidence": 0.69
+        },
+        {
+          "name": "DMSO, cell culture grade",
+          "role": "Comparator cryoprotectant component",
+          "vendor": null,
+          "catalog_number": null,
+          "price": null,
+          "currency": null,
+          "procurement_status": "requires_procurement_check",
+          "price_status": "requires_procurement_check",
+          "requires_procurement_check": true,
+          "evidence_source_ids": [
+            "tavily-extract-f59a7806cded"
+          ],
+          "notes": "Specific supplier listing not retrieved.",
+          "confidence": 0.48
+        },
+        {
+          "name": "CellTiter-Glo viability assay reagent",
+          "role": "Viability endpoint measurement",
+          "vendor": "Promega",
+          "catalog_number": null,
+          "price": null,
+          "currency": null,
+          "procurement_status": "requires_procurement_check",
+          "price_status": "contact_supplier",
+          "requires_procurement_check": true,
+          "evidence_source_ids": [
+            "tavily-extract-de7139078d73"
+          ],
+          "notes": "Specific kit format and price not retrieved.",
+          "confidence": 0.74
+        }
+      ],
+      "evidence_source_ids": [
+        "tavily-extract-dc2b45296632",
+        "tavily-extract-32c5d9321adc",
+        "tavily-extract-f59a7806cded",
+        "tavily-extract-de7139078d73",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.28,
+      "expert_review_required": true
+    },
+    "timeline": {
+      "title": "Execution timeline",
+      "summary": "Timeline is expressed as phases rather than exact durations because validated timings for freeze equilibration, storage interval, thaw handling, and assay readout were not directly retrieved. Final scheduling should follow local cryopreservation SOP after expert review.",
+      "bullets": [
+        "Phase 1: procurement, biosafety confirmation, and SOP review.",
+        "Phase 2: HeLa expansion and qualification of starting culture.",
+        "Phase 3: preparation of reviewed freezing formulations and vialing.",
+        "Phase 4: freezing and standardized cryostorage interval.",
+        "Phase 5: balanced thawing and post-thaw viability measurement.",
+        "Phase 6: data analysis against the >=15 percentage point success threshold.",
+        "Do not assign exact freeze, storage, thaw, or assay timing values until expert-approved SOP parameters are inserted."
+      ],
+      "evidence_source_ids": [
+        "tavily-extract-f59a7806cded",
+        "tavily-extract-de7139078d73",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.35,
+      "expert_review_required": true
+    },
+    "validation": {
+      "title": "Validation and data quality controls",
+      "summary": "The study should be considered interpretable only if cryovial preparation, freezing, thawing, and viability readout are standardized and auditable across arms. Because exact parameters were not source-retrieved, validation emphasis should be on consistency and predefinition rather than on assumed best settings.",
+      "bullets": [
+        "Use one authenticated HeLa source and document passage and contamination status.",
+        "Use matched starting cultures and intended cell input per vial across all arms.",
+        "Keep thaw order balanced and operator handling as consistent as possible.",
+        "Predefine the primary viability assay, normalization method, exclusion rules, and success criterion before executing the freeze-thaw experiment.",
+        "If feasible, include an orthogonal viability or recovery readout to confirm conclusions.",
+        "Retain raw assay files, lot numbers, and deviations log for expert review."
+      ],
+      "evidence_source_ids": [
+        "tavily-extract-dc2b45296632",
+        "tavily-extract-de7139078d73",
+        "epmc-47aa272ead10",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.59,
+      "expert_review_required": true
+    },
+    "risks": {
+      "title": "Key risks, limitations, and safety",
+      "summary": "The main scientific risk is that trehalose benefit is formulation-dependent and may not translate to HeLa cells or may require intracellular delivery considerations not addressed in the retrieved evidence pack. The main operational risk is introducing bias by changing multiple freeze-thaw parameters at once. Standard BSL-2 and cryogenic safety controls apply.",
+      "bullets": [
+        "Scientific risk: trehalose may not outperform the current DMSO protocol in HeLa cells despite supportive general cryobiology literature.",
+        "Mechanistic limitation: trehalose membrane permeability can be limited, so benefit may depend on formulation strategy not defined in the retrieved evidence.",
+        "Interpretation risk: if sucrose is not included as a matched arm, the study tests trehalose versus standard DMSO workflow rather than a strict sugar-replacement claim.",
+        "Operational risk: unstandardized cooling rate, thaw handling, or recovery interval could dominate observed viability differences.",
+        "Safety: handle HeLa cells under institutional BSL-2 practices.",
+        "Safety: DMSO can enhance dermal absorption; use gloves and avoid skin exposure.",
+        "Safety: liquid nitrogen and cryostorage equipment pose cold-burn, asphyxiation, and pressure hazards and require local training."
+      ],
+      "evidence_source_ids": [
+        "epmc-47aa272ead10",
+        "epmc-f9506ec8097d",
+        "standard-bmbl",
+        "assumption-d8728fd9b468"
+      ],
+      "confidence": 0.78,
+      "expert_review_required": true
+    },
+    "sources": [
+      {
+        "id": "epmc-47aa272ead10",
+        "source_name": "Europe PMC",
+        "title": "Chemical approaches to cryopreservation.",
+        "url": "https://europepmc.org/article/MED/35875681",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Cryopreservation of cells and biologics underpins all biomedical research from routine sample storage to emerging cell-based therapies, as well as ensuring cell banks provide authenticated, stable and consistent cell products. This field began with the discovery and wide adoption of glycerol and dimethyl sulfoxide as cryoprotectants over 60 years ago, but these tools do not work for all cells and are not ideal for all workflows. In this Review, we highlight and critically review the approaches to discover, and apply, new chemical tools for cryopreservation. We summarize the key (and complex)...",
+        "authors": [
+          "Murray KA",
+          "Gibson MI."
+        ],
+        "year": 2022,
+        "doi": "10.1038/s41570-022-00407-4",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467375Z"
+      },
+      {
+        "id": "epmc-f9506ec8097d",
+        "source_name": "Europe PMC",
+        "title": "Cryostorage of Mesenchymal Stem Cells and Biomedical Cell-Based Products.",
+        "url": "https://europepmc.org/article/MED/36078098",
+        "evidence_type": "exact_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Mesenchymal stem cells (MSCs) manifest vast opportunities for clinical use due both to their ability for self-renewal and for effecting paracrine therapeutic benefits. At the same time, difficulties with non-recurrent generation of large numbers of cells due to the necessity for long-term MSC expansion ex vivo, or the requirement for repeated sampling of biological material from a patient significantly limits the current use of MSCs in clinical practice. One solution to these problems entails the creation of a biobank using cell cryopreservation technology. This review is aimed at analyzing a...",
+        "authors": [
+          "Linkova DD",
+          "Rubtsova YP",
+          "Egorikhina MN."
+        ],
+        "year": 2022,
+        "doi": "10.3390/cells11172691",
+        "confidence": 0.79,
+        "retrieved_at": "2026-04-26T11:44:09.467472Z"
+      },
+      {
+        "id": "epmc-2313fb718ed5",
+        "source_name": "Europe PMC",
+        "title": "EACR 2025 Congress: Innovative Cancer Science, 16-19 June 2025.",
+        "url": "https://europepmc.org/article/MED/40498965",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "Abstracts submitted to the 'EACR 2025 Congress: Innovative Cancer Science', from 16-19 June 2025 and accepted by the Congress Organising Committee are published in this Supplement of Molecular Oncology, an affiliated journal of the European Association for Cancer Research (EACR).",
+        "authors": [],
+        "year": 2025,
+        "doi": "10.1002/1878-0261.70070",
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467512Z"
+      },
+      {
+        "id": "epmc-0a24b434102a",
+        "source_name": "Europe PMC",
+        "title": "Posters",
+        "url": "https://europepmc.org/article/PMC/PMC11208286",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "No abstract returned by provider.",
+        "authors": [],
+        "year": 2024,
+        "doi": null,
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467540Z"
+      },
+      {
+        "id": "epmc-dba13c5b2b27",
+        "source_name": "Europe PMC",
+        "title": "The 7th Congress of Biophysicists of Russia - conference proceedings : Abstracts",
+        "url": "https://europepmc.org/article/PMC/PMC10643713",
+        "evidence_type": "close_match",
+        "trust_tier": "literature_database",
+        "trust_level": "high",
+        "snippet": "No abstract returned by provider.",
+        "authors": [],
+        "year": 2023,
+        "doi": null,
+        "confidence": 0.66,
+        "retrieved_at": "2026-04-26T11:44:09.467568Z"
+      },
+      {
+        "id": "tavily-extract-dc2b45296632",
+        "source_name": "www.atcc.org",
+        "title": "HeLa - CCL-2 - ATCC",
+        "url": "https://www.atcc.org/products/ccl-2",
+        "evidence_type": "supplier_reference",
+        "trust_tier": "supplier_documentation",
+        "trust_level": "high",
+        "snippet": "American Type Culture Collection (ATCC) Logo American Type Culture Collection (ATCC) Logo Profile Icon Log In Create a Profile Order Status Quick Order 0 Order Status Quick Order Careers Support # HeLa CCL-2 \u2122 Explore our data Learn about ways to access our data HeLa cells are the first immortal human cells to be grown in culture and the basis for countless significant scientific discoveries. They were isolated in 1951 from a cervical carcinoma derived from a 31-year-old patient. Powered by Bioz See more details on Bioz ### Confirmation You were successfully signed up for notification. You wi...",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.71,
+        "retrieved_at": "2026-04-26T11:44:18.965215Z"
+      },
+      {
+        "id": "tavily-extract-f59a7806cded",
+        "source_name": "www.thermofisher.com",
+        "title": "Cell Freezing Protocols | Thermo Fisher Scientific - US",
+        "url": "https://www.thermofisher.com/us/en/home/references/gibco-cell-culture-basics/cell-culture-protocols/freezing-cells.html",
+        "evidence_type": "supplier_reference",
+        "trust_tier": "supplier_documentation",
+        "trust_level": "high",
+        "snippet": "50 mL bottle of Recovery Cell Culture Freezing Medium Gibco Recovery Cell Culture Freezing is a ready-to-use complete cryopreservation medium for mammalian cell cultures with an optimized ratio of fetal bovine serum to bovine serum for improved cell viability and cell recovery after thawing. 50 mL bottle of Gibco Synth-a-freeze freezing medium Gibco Synth-a-Freeze Cryopreservation Medium is a chemically defined, protein-free, sterile cryopreservation medium with 10% DMSO that is suitable for the cryopreservation of many stem and primary cell types apart from melanocytes. ## How to freeze cell...",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.71,
+        "retrieved_at": "2026-04-26T11:44:19.490862Z"
+      },
+      {
+        "id": "tavily-extract-de7139078d73",
+        "source_name": "worldwide.promega.com",
+        "title": "CellTiter-Glo\u00ae Luminescent Cell Viability Assay Protocol",
+        "url": "https://worldwide.promega.com/resources/protocols/technical-bulletins/0/celltiter-glo-luminescent-cell-viability-assay-protocol/",
+        "evidence_type": "supplier_reference",
+        "trust_tier": "supplier_documentation",
+        "trust_level": "high",
+        "snippet": "The CellTiter-Glo\u00ae Luminescent Cell Viability Assay is a homogeneous method to determine the number of viable cells in culture based on quantitation of the ATP present, which signals the presence of metabolically active cells. The CellTiter-Glo\u00ae Assay is designed for use with multiwell plate formats, making it ideal for automated high-throughput screening (HTS), cell proliferation and cytotoxicity assays. The homogeneous assay procedure involves adding a single reagent (CellTiter-Glo\u00ae Reagent) directly to cells cultured in serum-supplemented medium. Cell washing, removal of medium or multiple...",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.71,
+        "retrieved_at": "2026-04-26T11:44:20.047234Z"
+      },
+      {
+        "id": "tavily-extract-32c5d9321adc",
+        "source_name": "www.sigmaaldrich.com",
+        "title": "Trehalose - Sigma-Aldrich",
+        "url": "https://www.sigmaaldrich.com/US/en/search/trehalose?focus=products&page=1&perpage=30&sort=relevance&term=trehalose&type=product_name&srsltid=AfmBOoqi-xY4dvgcE5zDG8a5O6hrswAsYt-1yYg9g_BYaC2VzrwWFoPf",
+        "evidence_type": "supplier_reference",
+        "trust_tier": "supplier_documentation",
+        "trust_level": "high",
+        "snippet": "[Skip to Content](#main-content) [![MilliporeSigma](/static/logos/purple/millipore_sigma.svg)](/US/en) Applied Filters: Keyword:'trehalose' Shipping Product Category Brand Biological Source Color Manufacturer Physical Form Product Line Purity Research Area Tissue Quality Segment Application Special Grade Sterility Technique We have upgraded our search experience, but you can still use our previous version. PreviousNew # trehalose --- Showing 1-10 of 22 results for\"trehalose\"within Products [![Trehalose Pharmaceutical Secondary Standard; Certified Reference Material](/deepweb/assets/sigmaaldri...",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.71,
+        "retrieved_at": "2026-04-26T11:44:21.046338Z"
+      },
+      {
+        "id": "tavily-extract-08fe74a8ee16",
+        "source_name": "www.sigmaaldrich.com",
+        "title": "Trehalose | Sigma-Aldrich",
+        "url": "https://www.sigmaaldrich.com/IN/en/search/trehalose?focus=products&page=1&perpage=30&sort=relevance&term=%20Trehalose&type=product&srsltid=AfmBOoqtpS7S3GO8Vjk-bx53wcRoFRr6zthA_iQFUy6hEXF8TldXcE2m",
+        "evidence_type": "supplier_reference",
+        "trust_tier": "supplier_documentation",
+        "trust_level": "high",
+        "snippet": "[Skip to Content](#main-content) [![Merck](/static/logos/purple/merck.svg)](/GB/en) Applied Filters: Keyword:' Trehalose' Shipping Product Category Brand Biological Source Color Manufacturer Physical Form Product Line Purity Research Area Tissue Quality Segment Application Special Grade Sterility Technique We have upgraded our search experience, but you can still use our previous version. PreviousNew # Trehalose --- Showing 1-10 of 24 results for\"Trehalose\"within Products [![Trehalose Pharmaceutical Secondary Standard; Certified Reference Material](/deepweb/assets/sigmaaldrich/product/structu...",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.71,
+        "retrieved_at": "2026-04-26T11:44:21.046511Z"
+      },
+      {
+        "id": "standard-bmbl",
+        "source_name": "BMBL",
+        "title": "BMBL biosafety checklist for human cell lines and BSL-2 handling",
+        "url": "https://www.cdc.gov/labs/BMBL.html",
+        "evidence_type": "safety_or_standard",
+        "trust_tier": "scientific_standard",
+        "trust_level": "high",
+        "snippet": "Use BMBL safeguards to review HeLa BSL-2 handling, HPV context, storage, and laboratory biosafety controls.",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.84,
+        "retrieved_at": "2026-04-26T11:45:18.370170Z"
+      },
+      {
+        "id": "assumption-d8728fd9b468",
+        "source_name": "MVP assumption",
+        "title": "cell biology assumptions requiring expert review",
+        "url": null,
+        "evidence_type": "assumption",
+        "trust_tier": "inferred",
+        "trust_level": "low",
+        "snippet": "Inferred operational details remain expert-review-required unless source-backed evidence is retrieved.",
+        "authors": [],
+        "year": null,
+        "doi": null,
+        "confidence": 0.33,
+        "retrieved_at": "2026-04-26T11:45:18.370229Z"
+      }
+    ],
+    "generated_at": "2026-04-26T00:00:00Z"
+  }
+}
