@@ -39,13 +39,49 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const readiness = {
+  strict_live_mode: false,
+  live_ready: false,
+  providers: [
+    {
+      provider: "OpenAI",
+      status: "missing_secret" as const,
+      detail: "Structured parsing and plan generation",
+      configured: false,
+      authenticated: false,
+    },
+  ],
+};
+
+const recentRuns: Array<{
+  run_id: string;
+  hypothesis: string;
+  preset_id: string | null;
+  status: string;
+  review_state: "generated";
+  created_at: string;
+  updated_at: string;
+  domain: string | null;
+  plan_title: string | null;
+  quality_summary: null;
+  used_seed_data: boolean;
+}> = [];
+
 describe("App", () => {
   it("loads all four presets and gates plan generation before Literature QC", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => presets,
+      vi.fn((url: string) => {
+        if (url.endsWith("/api/presets")) {
+          return Promise.resolve({ ok: true, json: async () => presets });
+        }
+        if (url.endsWith("/api/readiness")) {
+          return Promise.resolve({ ok: true, json: async () => readiness });
+        }
+        if (url.endsWith("/api/runs")) {
+          return Promise.resolve({ ok: true, json: async () => recentRuns });
+        }
+        return Promise.reject(new Error(`Unexpected URL ${url}`));
       }),
     );
 
@@ -54,12 +90,19 @@ describe("App", () => {
     expect(await screen.findByText("Main demo / HeLa cryopreservation")).toBeInTheDocument();
     expect(screen.getByText("Diagnostics / CRP biosensor")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /generate plan/i })).toBeDisabled();
+    expect(screen.getByText("Provider readiness")).toBeInTheDocument();
   });
 
   it("runs Literature QC and enables plan generation", async () => {
     const fetchMock = vi.fn((url: string) => {
       if (url.endsWith("/api/presets")) {
         return Promise.resolve({ ok: true, json: async () => presets });
+      }
+      if (url.endsWith("/api/readiness")) {
+        return Promise.resolve({ ok: true, json: async () => readiness });
+      }
+      if (url.endsWith("/api/runs")) {
+        return Promise.resolve({ ok: true, json: async () => recentRuns });
       }
       if (url.endsWith("/api/literature-qc")) {
         return Promise.resolve({
@@ -99,6 +142,21 @@ describe("App", () => {
               evidence_gap_warnings: ["Use not found in searched sources language."],
             },
           }),
+        });
+      }
+      if (url.endsWith("/api/runs/run-1/events")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [
+            {
+              id: "event-1",
+              run_id: "run-1",
+              stage: "literature_qc",
+              status: "completed",
+              message: "Literature QC completed and references stored.",
+              created_at: "2026-04-26T00:00:00Z",
+            },
+          ],
         });
       }
       return Promise.reject(new Error(`Unexpected URL ${url}`));

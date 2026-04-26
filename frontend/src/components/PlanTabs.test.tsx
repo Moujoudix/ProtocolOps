@@ -28,6 +28,26 @@ const parsedHypothesis = {
 const plan = {
   plan_title: "Trehalose vs DMSO HeLa Cryopreservation Review-Ready Experimental Plan",
   status_label: "SOP draft for expert review",
+  quality_summary: {
+    literature_confidence: 0.66,
+    protocol_confidence: 0.4,
+    materials_confidence: 0.72,
+    budget_confidence: 0.55,
+    evidence_completeness: 0.64,
+    operational_readiness: 0.58,
+    review_burden: 0.72,
+  },
+  memory_applied: [
+    {
+      run_id: "run-previous",
+      review_session_id: "review-1",
+      target_type: "protocol_step" as const,
+      target_key: "protocol.1",
+      action: "comment" as const,
+      note: "Reduce confidence when protocol detail is only community-backed.",
+      confidence: 0.76,
+    },
+  ],
   overview: {
     title: "Overview",
     summary: "Overview summary",
@@ -259,8 +279,32 @@ describe("PlanTabs", () => {
     expect(screen.getAllByText("Inferred / expert review required").length).toBeGreaterThan(0);
     expect(screen.getAllByText("High trust").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Supplier documentation").length).toBeGreaterThan(0);
-    expect(screen.getByText("ATCC")).toBeInTheDocument();
+    expect(screen.getAllByText("ATCC").length).toBeGreaterThan(0);
     expect(screen.getByText(/ATCC HeLa cell stock/)).toBeInTheDocument();
     expect(screen.getAllByText(/Protocol step 1/).length).toBeGreaterThan(0);
+  });
+
+  it("renders review memory and run timeline when provided", () => {
+    render(
+      <PlanTabs
+        plan={plan}
+        parsedHypothesis={parsedHypothesis}
+        runId="run-1"
+        reviewState="reviewed"
+        runEvents={[
+          {
+            id: "evt-1",
+            run_id: "run-1",
+            stage: "plan_generation",
+            status: "completed",
+            message: "Experiment plan generated and persisted.",
+            created_at: "2026-04-26T00:00:00Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/prior reviewed signals applied/i)).toBeInTheDocument();
+    expect(screen.getByText("Run timeline")).toBeInTheDocument();
   });
 });

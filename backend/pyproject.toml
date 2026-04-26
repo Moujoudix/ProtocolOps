@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ai-scientist-backend"
 version = "0.1.0"
@@ -6,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "httpx>=0.27.0",
+    "mcp[cli]>=1.18.0",
     "openai>=1.100.0",
     "pydantic>=2.8.0",
     "pydantic-settings>=2.4.0",
@@ -23,3 +28,5 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.setuptools.packages.find]
+include = ["app*", "consensus_bridge*"]

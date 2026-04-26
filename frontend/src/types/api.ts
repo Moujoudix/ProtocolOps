@@ -29,6 +29,39 @@ export type PriceStatus =
   | "requires_procurement_check"
   | "contact_supplier";
 
+export type ReviewState =
+  | "generated"
+  | "reviewed"
+  | "revised"
+  | "approved_for_proposal";
+
+export type ReviewAction =
+  | "approve"
+  | "reject"
+  | "edit"
+  | "replace"
+  | "unrealistic"
+  | "missing_dependency"
+  | "comment";
+
+export type ReviewTargetType =
+  | "section"
+  | "protocol_step"
+  | "material"
+  | "budget_item"
+  | "timeline"
+  | "validation"
+  | "risk";
+
+export type ReadinessStatus =
+  | "ready"
+  | "missing_secret"
+  | "public_mode"
+  | "unreachable"
+  | "degraded";
+
+export type RunMode = "fully_live" | "degraded_live" | "demo_fallback";
+
 export type NoveltySignal =
   | "exact_match_found"
   | "similar_work_exists"
@@ -87,6 +120,20 @@ export interface ProviderTraceEntry {
   query: string;
   result_count: number;
   error: string | null;
+}
+
+export interface ProviderReadiness {
+  provider: string;
+  status: ReadinessStatus;
+  detail: string;
+  configured: boolean;
+  authenticated: boolean;
+}
+
+export interface ReadinessResponse {
+  strict_live_mode: boolean;
+  live_ready: boolean;
+  providers: ProviderReadiness[];
 }
 
 export interface LiteratureQC {
@@ -154,9 +201,31 @@ export interface BudgetSummary {
   expert_review_required: boolean;
 }
 
+export interface ReviewMemoryReference {
+  run_id: string;
+  review_session_id: string;
+  target_type: ReviewTargetType;
+  target_key: string;
+  action: ReviewAction;
+  note: string;
+  confidence: number | null;
+}
+
+export interface PlanQualitySummary {
+  literature_confidence: number;
+  protocol_confidence: number;
+  materials_confidence: number;
+  budget_confidence: number;
+  evidence_completeness: number;
+  operational_readiness: number;
+  review_burden: number;
+}
+
 export interface ExperimentPlan {
   plan_title: string;
   status_label: string;
+  quality_summary: PlanQualitySummary | null;
+  memory_applied: ReviewMemoryReference[];
   overview: ExperimentPlanSection;
   literature_qc: LiteratureQC;
   study_design: ExperimentPlanSection;
@@ -173,4 +242,108 @@ export interface ExperimentPlan {
 export interface PlanResponse {
   run_id: string;
   plan: ExperimentPlan;
+}
+
+export interface ComparisonMetricRecord {
+  label: string;
+  baseline: string;
+  current: string;
+  delta: number | null;
+}
+
+export interface RunComparisonResponse {
+  baseline_run_id: string;
+  current_run_id: string;
+  baseline_title: string;
+  current_title: string;
+  summary: string[];
+  metrics: ComparisonMetricRecord[];
+  protocol_changes: string[];
+  material_changes: string[];
+  budget_changes: string[];
+}
+
+export interface RunListItem {
+  run_id: string;
+  hypothesis: string;
+  preset_id: string | null;
+  status: string;
+  review_state: ReviewState;
+  run_mode: RunMode;
+  created_at: string;
+  updated_at: string;
+  domain: string | null;
+  plan_title: string | null;
+  quality_summary: PlanQualitySummary | null;
+  used_seed_data: boolean;
+  is_presentation_anchor: boolean;
+  parent_run_id: string | null;
+  revision_number: number;
+}
+
+export interface RunStateResponse {
+  run_id: string;
+  hypothesis: string;
+  preset_id: string | null;
+  status: string;
+  review_state: ReviewState;
+  run_mode: RunMode;
+  used_seed_data: boolean;
+  is_presentation_anchor: boolean;
+  parent_run_id: string | null;
+  revision_number: number;
+  parsed_hypothesis: ParsedHypothesis | null;
+  literature_qc: LiteratureQC | null;
+  plan: ExperimentPlan | null;
+}
+
+export interface RunEventRecord {
+  id: string;
+  run_id: string;
+  stage: string;
+  status: string;
+  message: string;
+  created_at: string;
+}
+
+export interface ReviewItemPayload {
+  target_type: ReviewTargetType;
+  target_key: string;
+  action: ReviewAction;
+  comment?: string | null;
+  replacement_text?: string | null;
+  confidence_override?: number | null;
+}
+
+export interface ReviewSubmissionRequest {
+  reviewer_name?: string | null;
+  summary?: string | null;
+  review_state: ReviewState;
+  items: ReviewItemPayload[];
+}
+
+export interface ReviewItemRecord {
+  id: string;
+  target_type: ReviewTargetType;
+  target_key: string;
+  action: ReviewAction;
+  comment: string | null;
+  replacement_text: string | null;
+  confidence_override: number | null;
+  created_at: string;
+}
+
+export interface ReviewSessionRecord {
+  id: string;
+  run_id: string;
+  reviewer_name: string | null;
+  summary: string | null;
+  review_state: ReviewState;
+  created_at: string;
+  updated_at: string;
+  items: ReviewItemRecord[];
+}
+
+export interface ReviewSubmissionResponse {
+  review: ReviewSessionRecord;
 }

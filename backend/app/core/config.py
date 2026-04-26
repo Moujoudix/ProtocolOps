@@ -19,7 +19,13 @@ class Settings(BaseSettings):
     protocols_io_token: str | None = None
     tavily_api_key: str | None = None
     consensus_mcp_enabled: bool = False
-    consensus_mcp_bridge_url: str | None = None
+    consensus_mcp_bridge_url: str | None = "http://127.0.0.1:8765/search"
+    consensus_mcp_server_url: str = "https://mcp.consensus.app/mcp"
+    consensus_bridge_port: int = 8765
+    consensus_bridge_host: str = "127.0.0.1"
+    consensus_bridge_home: str | None = None
+    run_live_integration: bool = False
+    strict_live_mode: bool = False
 
     request_timeout_seconds: float = Field(default=12.0, ge=1.0)
 

@@ -11,6 +11,18 @@ The internal source flow is documented in [RESOURCE_ROUTING.md](RESOURCE_ROUTING
 5. OpenAI structured experiment-plan generation
 6. frontend rendering with sources, confidence, and review flags
 
+## Product Features
+
+The app now includes:
+
+- provider readiness checks for OpenAI, Consensus, Tavily, protocols.io, and Semantic Scholar public mode
+- persistent run history with reopenable public runs
+- stage event timelines per run
+- structured scientist review capture
+- retrieval-memory guidance from prior reviewed runs
+- export surfaces for JSON, citations, and procurement follow-up
+- section-level quality metrics for literature, protocol, materials, budget, and operational readiness
+
 ## Stack
 
 - Backend: FastAPI, Pydantic, SQLModel, SQLite, httpx, OpenAI Python SDK
@@ -27,6 +39,13 @@ cd backend
 cp .env.example .env
 ../.venv/bin/python -m pip install -e ".[dev]"
 ../.venv/bin/uvicorn app.main:app --reload
+```
+
+Consensus bridge:
+
+```bash
+cd backend
+../.venv/bin/python -m consensus_bridge.main
 ```
 
 Frontend:
@@ -46,11 +65,32 @@ Secrets stay backend-only in `backend/.env`.
 - `BACKEND_CORS_ALLOW_ORIGINS`
 - `BACKEND_CORS_ALLOW_ORIGIN_REGEX`
 - `OPENAI_API_KEY`
+- `STRICT_LIVE_MODE`
 - `CONSENSUS_MCP_ENABLED`
 - `CONSENSUS_MCP_BRIDGE_URL`
+- `CONSENSUS_MCP_SERVER_URL`
+- `CONSENSUS_BRIDGE_HOST`
+- `CONSENSUS_BRIDGE_PORT`
+- `CONSENSUS_BRIDGE_HOME`
 - `SEMANTIC_SCHOLAR_API_KEY`
 - `PROTOCOLS_IO_TOKEN`
 - `TAVILY_API_KEY`
+- `RUN_LIVE_INTEGRATION`
+
+## API Surface
+
+- `GET /api/presets`
+- `GET /api/readiness`
+- `GET /api/runs`
+- `POST /api/literature-qc`
+- `POST /api/runs/{run_id}/plan`
+- `GET /api/runs/{run_id}`
+- `GET /api/runs/{run_id}/events`
+- `GET /api/runs/{run_id}/reviews`
+- `POST /api/runs/{run_id}/reviews`
+- `GET /api/runs/{run_id}/export/json`
+- `GET /api/runs/{run_id}/export/citations`
+- `GET /api/runs/{run_id}/export/procurement`
 
 Frontend runtime:
 
@@ -74,6 +114,8 @@ Literature QC is sequential and traceable.
 - If `CONSENSUS_MCP_ENABLED=true`, Consensus is always attempted first.
 - Consensus results are cached by normalized hypothesis text in SQLite.
 - Consensus failures are recorded in `provider_trace` and do not stop Semantic Scholar or Europe PMC.
+- The backend expects a local HTTP sidecar at `CONSENSUS_MCP_BRIDGE_URL`.
+- The checked-in bridge uses `mcp-remote` to talk to `https://mcp.consensus.app/mcp` and keeps OAuth local to the developer machine.
 - Europe PMC and Semantic Scholar run for every Literature QC.
 - NCBI is only used as a biomedical fallback.
 - arXiv is only used for diagnostics-biosensor and microbial-electrochemistry routes.
@@ -111,3 +153,49 @@ cd ../frontend
 npm test -- --run
 npm run build
 ```
+
+## Live HeLa Smoke
+
+The first fully live path is the HeLa preset.
+
+1. Add live secrets to `backend/.env`
+2. Start the Consensus bridge:
+
+```bash
+cd backend
+../.venv/bin/python -m consensus_bridge.main
+```
+
+3. Start the backend:
+
+```bash
+cd backend
+../.venv/bin/uvicorn app.main:app --reload
+```
+
+4. Start the frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+5. Optional live backend verification:
+
+```bash
+cd backend
+RUN_LIVE_INTEGRATION=1 ../.venv/bin/pytest tests/test_live_integration.py -q
+```
+
+The live HeLa smoke should fail if seeded HeLa evidence appears in the final QC or plan sources.
+
+## Review Memory
+
+Scientist review is now implemented as structured review sessions stored against runs. The current loop is:
+
+1. generate a plan
+2. submit structured review items against sections, protocol steps, materials, budget, timeline, validation, or risks
+3. persist those corrections
+4. retrieve similar prior review items during future generation for the same domain route
+
+This retrieval-memory loop ships now. Formal fine-tuning remains a later phase once enough reviewed examples and evals have been collected.

@@ -15,6 +15,7 @@ from app.models.schemas import (
     PriceStatus,
     ProcurementStatus,
     ProtocolStep,
+    ReviewMemoryReference,
     TrustLevel,
     TrustTier,
     now_utc,
@@ -40,10 +41,11 @@ class OpenAIStructuredClient:
         return self._client
 
     async def parse_hypothesis(self, hypothesis: str, preset_id: str | None = None) -> ParsedHypothesis:
-        if is_hela_trehalose_hypothesis(hypothesis, preset_id):
-            return seeded_hela_parsed(hypothesis)
-
         if not self.enabled:
+            if self.settings.strict_live_mode:
+                raise RuntimeError("OpenAI is required in strict live mode.")
+            if is_hela_trehalose_hypothesis(hypothesis, preset_id):
+                return seeded_hela_parsed(hypothesis)
             return heuristic_parse_hypothesis(hypothesis, preset_id=preset_id)
 
         try:
@@ -67,6 +69,8 @@ class OpenAIStructuredClient:
             )
             return normalize_parsed_hypothesis(response.output_parsed, hypothesis, preset_id)
         except Exception:
+            if self.settings.strict_live_mode:
+                raise RuntimeError("OpenAI structured parsing failed in strict live mode.")
             return heuristic_parse_hypothesis(hypothesis, preset_id=preset_id)
 
     async def generate_plan(
@@ -75,13 +79,22 @@ class OpenAIStructuredClient:
         literature_qc: LiteratureQC,
         evidence_pack: EvidencePack,
         preset_id: str | None = None,
+        review_memory: list[ReviewMemoryReference] | None = None,
     ) -> ExperimentPlan:
         if not self.enabled:
+            if self.settings.strict_live_mode:
+                raise RuntimeError("OpenAI plan generation is required in strict live mode.")
             if is_hela_trehalose_hypothesis(parsed.original_text, preset_id):
-                return seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack)
-            return generic_review_plan(parsed, literature_qc, evidence_pack)
+                return apply_review_memory_to_plan(
+                    seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack),
+                    review_memory or [],
+                )
+            return apply_review_memory_to_plan(
+                generic_review_plan(parsed, literature_qc, evidence_pack),
+                review_memory or [],
+            )
 
-        prompt = build_plan_prompt(parsed, literature_qc, evidence_pack)
+        prompt = build_plan_prompt(parsed, literature_qc, evidence_pack, review_memory or [])
         try:
             response = await self._get_client().responses.parse(
                 model=self.settings.openai_plan_model,
@@ -100,7 +113,10 @@ class OpenAIStructuredClient:
                 ],
                 text_format=ExperimentPlan,
             )
-            return apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack)
+            return apply_review_memory_to_plan(
+                apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack),
+                review_memory or [],
+            )
         except Exception:
             try:
                 response = await self._get_client().responses.parse(
@@ -111,21 +127,39 @@ class OpenAIStructuredClient:
                     ],
                     text_format=ExperimentPlan,
                 )
-                return apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack)
+                return apply_review_memory_to_plan(
+                    apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack),
+                    review_memory or [],
+                )
             except Exception:
+                if self.settings.strict_live_mode:
+                    raise RuntimeError("OpenAI plan generation failed in strict live mode.")
                 if is_hela_trehalose_hypothesis(parsed.original_text, preset_id):
-                    return seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack)
-                return generic_review_plan(parsed, literature_qc, evidence_pack)
+                    return apply_review_memory_to_plan(
+                        seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack),
+                        review_memory or [],
+                    )
+                return apply_review_memory_to_plan(
+                    generic_review_plan(parsed, literature_qc, evidence_pack),
+                    review_memory or [],
+                )
 
 
-def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evidence_pack: EvidencePack) -> str:
+def build_plan_prompt(
+    parsed: ParsedHypothesis,
+    literature_qc: LiteratureQC,
+    evidence_pack: EvidencePack,
+    review_memory: list[ReviewMemoryReference],
+) -> str:
     evidence_json = [source.model_dump(mode="json") for source in evidence_pack.sources]
+    memory_json = [memory.model_dump(mode="json") for memory in review_memory]
     return (
         "Create a review-ready experimental plan for this parsed hypothesis.\n\n"
         f"Parsed hypothesis:\n{parsed.model_dump_json(indent=2)}\n\n"
         f"Literature QC:\n{literature_qc.model_dump_json(indent=2)}\n\n"
         f"Evidence pack:\n{evidence_pack.model_dump_json(indent=2)}\n\n"
         f"Evidence sources:\n{evidence_json}\n\n"
+        f"Prior reviewed corrections for similar runs:\n{memory_json}\n\n"
         "Required guardrails:\n"
         "- Use 'not found in searched sources'; do not say a hypothesis has never been done.\n"
         "- Distinguish exact_match, close_match, adjacent_method, generic_method, supplier_reference, safety_or_standard, and assumption evidence.\n"
@@ -134,6 +168,8 @@ def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evi
         "- Leave catalog_number, price, and currency null unless directly retrieved.\n"
         "- Use procurement_status and price_status conservatively.\n"
         "- Use 'review-ready experimental plan' or 'SOP draft for expert review'.\n"
+        f"- Domain-specific implementation notes for {parsed.domain_route.value}: {domain_specific_generation_notes(parsed.domain_route)}\n"
+        "- If prior reviewed corrections exist, prefer them over generic assumptions and mention them in the plan only when relevant.\n"
     )
 
 
@@ -259,6 +295,128 @@ def dedupe_terms(values: list[str]) -> list[str]:
         if cleaned and cleaned not in deduped:
             deduped.append(cleaned)
     return deduped
+
+
+def domain_specific_generation_notes(domain_route: DomainRoute) -> str:
+    notes = {
+        DomainRoute.cell_biology: (
+            "Prefer supplier-backed HeLa, cryopreservation, and viability assay evidence. "
+            "Do not invent freeze rates, trehalose concentrations, or thaw timings."
+        ),
+        DomainRoute.diagnostics_biosensor: (
+            "Prefer literature methods, assay comparators, and supplier antibody or ELISA evidence. "
+            "Do not overstate device performance without source-backed validation."
+        ),
+        DomainRoute.animal_gut_health: (
+            "Use ARRIVE and ethics-aware language. "
+            "Do not invent dosing, housing, gavage, FITC-dextran dose, sample size, or euthanasia details."
+        ),
+        DomainRoute.microbial_electrochemistry: (
+            "Require source backing for reactor design, cathode potential, anaerobic handling, CO2 delivery, and acetate benchmarks."
+        ),
+    }
+    return notes[domain_route]
+
+
+def apply_review_memory_to_plan(
+    plan: ExperimentPlan,
+    review_memory: list[ReviewMemoryReference],
+) -> ExperimentPlan:
+    if not review_memory:
+        return plan
+
+    updated = plan.model_copy(deep=True)
+    for memory in review_memory:
+        note = memory.note.strip()
+        replacement = note if memory.action.value == "comment" else note
+
+        if memory.target_type.value == "material":
+            target = find_material(updated.materials, memory.target_key)
+            if target is not None:
+                target.notes = merge_note(target.notes, note)
+                if memory.action.value in {"replace", "edit"}:
+                    target.notes = merge_note(target.notes, f"Preferred reviewed adjustment: {note}")
+                if memory.confidence is not None:
+                    target.confidence = memory.confidence
+                continue
+
+        if memory.target_type.value == "budget_item":
+            target = find_material(updated.budget.items, memory.target_key)
+            if target is not None:
+                target.notes = merge_note(target.notes, note)
+                if memory.confidence is not None:
+                    target.confidence = memory.confidence
+                continue
+
+        if memory.target_type.value == "protocol_step":
+            target = find_protocol_step(updated.protocol, memory.target_key)
+            if target is not None:
+                target.actions.append(f"Scientist-reviewed adjustment: {note}")
+                target.review_reason = merge_note(target.review_reason or "", note)
+                target.expert_review_required = True
+                if memory.confidence is not None:
+                    target.confidence = memory.confidence
+                continue
+
+        target_section = find_section(updated, memory.target_type.value, memory.target_key)
+        if target_section is not None:
+            target_section.bullets.append(f"Scientist-reviewed adjustment: {replacement}")
+            target_section.expert_review_required = True
+            if memory.confidence is not None:
+                target_section.confidence = memory.confidence
+            continue
+
+        updated.risks.bullets.append(f"Scientist review note for {memory.target_type.value} '{memory.target_key}': {note}")
+        updated.risks.expert_review_required = True
+
+    if review_memory:
+        updated.status_label = "Scientist-reviewed revision for expert review"
+    return updated
+
+
+def find_material(items: list[MaterialItem], target_key: str) -> MaterialItem | None:
+    target = target_key.strip().lower()
+    for item in items:
+        if target and (target == item.name.lower() or target in item.name.lower()):
+            return item
+    return None
+
+
+def find_protocol_step(steps: list[ProtocolStep], target_key: str) -> ProtocolStep | None:
+    target = target_key.strip().lower()
+    for step in steps:
+        if target == str(step.step_number) or target == step.title.lower() or target in step.title.lower():
+            return step
+    return None
+
+
+def find_section(plan: ExperimentPlan, target_type: str, target_key: str) -> ExperimentPlanSection | None:
+    section_map = {
+        "section": {
+            "overview": plan.overview,
+            "study_design": plan.study_design,
+            "timeline": plan.timeline,
+            "validation": plan.validation,
+            "risk": plan.risks,
+            "risks": plan.risks,
+        },
+        "timeline": {"timeline": plan.timeline},
+        "validation": {"validation": plan.validation},
+        "risk": {"risk": plan.risks, "risks": plan.risks},
+    }
+    bucket = section_map.get(target_type, {})
+    key = target_key.strip().lower()
+    return bucket.get(key) or bucket.get(target_type)
+
+
+def merge_note(existing: str, addition: str) -> str:
+    existing_clean = existing.strip()
+    addition_clean = addition.strip()
+    if not existing_clean:
+        return addition_clean
+    if addition_clean in existing_clean:
+        return existing_clean
+    return f"{existing_clean} Scientist review: {addition_clean}"
 
 
 def generic_review_plan(

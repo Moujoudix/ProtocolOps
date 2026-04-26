@@ -18,6 +18,7 @@ from app.models.schemas import (
 from app.providers.base import ProviderSearchResult, SearchContext
 from app.providers.protocols import OpenWetWareProvider
 from app.providers.utils import normalize_hypothesis_key
+from app.services.consensus_adapter import ConsensusMcpAdapter
 from app.services.evidence_pack import EvidencePackService
 from app.services.literature_qc import LiteratureQcService
 from app.services.openai_client import OpenAIStructuredClient, heuristic_parse_hypothesis
@@ -136,6 +137,51 @@ async def test_consensus_cache_suppresses_duplicate_live_calls(monkeypatch):
 
     assert call_count["consensus"] == 1
     assert qc.provider_trace[0].cached is True
+
+
+@pytest.mark.asyncio
+async def test_consensus_adapter_fails_fast_when_bridge_is_unauthenticated(monkeypatch):
+    settings = Settings(
+        app_env="development",
+        consensus_mcp_enabled=True,
+        consensus_mcp_bridge_url="http://127.0.0.1:8765/search",
+    )
+    adapter = ConsensusMcpAdapter(settings)
+    parsed = heuristic_parse_hypothesis("HeLa cryopreservation with trehalose versus DMSO.", preset_id="hela-trehalose")
+    context = SearchContext(parsed_hypothesis=parsed, preset_id="hela-trehalose", stage="literature_qc")
+    calls = {"get": 0, "post": 0}
+
+    class MockResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"authenticated": False, "detail": "Consensus OAuth not detected yet"}
+
+    class MockClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def get(self, url):
+            calls["get"] += 1
+            return MockResponse()
+
+        async def post(self, url, json):
+            calls["post"] += 1
+            return MockResponse()
+
+    monkeypatch.setattr("app.services.consensus_adapter.httpx.AsyncClient", MockClient)
+
+    with pytest.raises(RuntimeError, match="Consensus OAuth not detected yet"):
+        await adapter.search("trehalose HeLa cryopreservation viability DMSO", context)
+
+    assert calls == {"get": 1, "post": 0}
 
 
 @pytest.mark.asyncio

@@ -75,6 +75,8 @@ class LiteratureQcService:
             context.parsed_hypothesis.original_text,
             context.preset_id,
         ):
+            if self.settings.strict_live_mode:
+                raise RuntimeError("Strict live mode forbids seeded HeLa literature fallback.")
             sources = dedupe_sources(sources + seeded_hela_sources())
             searched_sources.append("HeLa demo seed")
             used_seed_data = True

@@ -57,6 +57,47 @@ class NoveltySignal(StrEnum):
     not_found_in_searched_sources = "not_found_in_searched_sources"
 
 
+class ReviewState(StrEnum):
+    generated = "generated"
+    reviewed = "reviewed"
+    revised = "revised"
+    approved_for_proposal = "approved_for_proposal"
+
+
+class ReviewAction(StrEnum):
+    approve = "approve"
+    reject = "reject"
+    edit = "edit"
+    replace = "replace"
+    unrealistic = "unrealistic"
+    missing_dependency = "missing_dependency"
+    comment = "comment"
+
+
+class ReviewTargetType(StrEnum):
+    section = "section"
+    protocol_step = "protocol_step"
+    material = "material"
+    budget_item = "budget_item"
+    timeline = "timeline"
+    validation = "validation"
+    risk = "risk"
+
+
+class ReadinessStatus(StrEnum):
+    ready = "ready"
+    missing_secret = "missing_secret"
+    public_mode = "public_mode"
+    unreachable = "unreachable"
+    degraded = "degraded"
+
+
+class RunMode(StrEnum):
+    fully_live = "fully_live"
+    degraded_live = "degraded_live"
+    demo_fallback = "demo_fallback"
+
+
 class Preset(StrictModel):
     id: str
     label: str
@@ -174,6 +215,40 @@ class EvidencePack(StrictModel):
     confidence_summary: float = Field(ge=0.0, le=1.0)
 
 
+class ProviderReadiness(StrictModel):
+    provider: str
+    status: ReadinessStatus
+    detail: str
+    configured: bool
+    authenticated: bool = False
+
+
+class ReadinessResponse(StrictModel):
+    strict_live_mode: bool
+    live_ready: bool
+    providers: list[ProviderReadiness]
+
+
+class ReviewMemoryReference(StrictModel):
+    run_id: str
+    review_session_id: str
+    target_type: ReviewTargetType
+    target_key: str
+    action: ReviewAction
+    note: str
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class PlanQualitySummary(StrictModel):
+    literature_confidence: float = Field(ge=0.0, le=1.0)
+    protocol_confidence: float = Field(ge=0.0, le=1.0)
+    materials_confidence: float = Field(ge=0.0, le=1.0)
+    budget_confidence: float = Field(ge=0.0, le=1.0)
+    evidence_completeness: float = Field(ge=0.0, le=1.0)
+    operational_readiness: float = Field(ge=0.0, le=1.0)
+    review_burden: float = Field(ge=0.0, le=1.0)
+
+
 class ExperimentPlanSection(StrictModel):
     title: str
     summary: str
@@ -244,6 +319,8 @@ class BudgetSummary(StrictModel):
 class ExperimentPlan(StrictModel):
     plan_title: str
     status_label: str
+    quality_summary: PlanQualitySummary | None = None
+    memory_applied: list[ReviewMemoryReference] = Field(default_factory=list)
     overview: ExperimentPlanSection
     literature_qc: LiteratureQC
     study_design: ExperimentPlanSection
@@ -268,14 +345,108 @@ class PlanResponse(StrictModel):
     plan: ExperimentPlan
 
 
+class ComparisonMetricRecord(StrictModel):
+    label: str
+    baseline: str
+    current: str
+    delta: float | None = None
+
+
+class RunComparisonResponse(StrictModel):
+    baseline_run_id: str
+    current_run_id: str
+    baseline_title: str
+    current_title: str
+    summary: list[str] = Field(default_factory=list)
+    metrics: list[ComparisonMetricRecord] = Field(default_factory=list)
+    protocol_changes: list[str] = Field(default_factory=list)
+    material_changes: list[str] = Field(default_factory=list)
+    budget_changes: list[str] = Field(default_factory=list)
+
+
+class RunListItem(StrictModel):
+    run_id: str
+    hypothesis: str
+    preset_id: str | None
+    status: str
+    review_state: ReviewState
+    run_mode: RunMode
+    created_at: datetime
+    updated_at: datetime
+    domain: str | None = None
+    plan_title: str | None = None
+    quality_summary: PlanQualitySummary | None = None
+    used_seed_data: bool = False
+    is_presentation_anchor: bool = False
+    parent_run_id: str | None = None
+    revision_number: int = 0
+
+
 class RunStateResponse(StrictModel):
     run_id: str
     hypothesis: str
     preset_id: str | None
     status: str
+    review_state: ReviewState = ReviewState.generated
+    run_mode: RunMode = RunMode.degraded_live
+    used_seed_data: bool = False
+    is_presentation_anchor: bool = False
+    parent_run_id: str | None = None
+    revision_number: int = 0
     parsed_hypothesis: ParsedHypothesis | None
     literature_qc: LiteratureQC | None
     plan: ExperimentPlan | None
+
+
+class RunEventRecord(StrictModel):
+    id: str
+    run_id: str
+    stage: str
+    status: str
+    message: str
+    created_at: datetime
+
+
+class ReviewItemPayload(StrictModel):
+    target_type: ReviewTargetType
+    target_key: str
+    action: ReviewAction
+    comment: str | None = None
+    replacement_text: str | None = None
+    confidence_override: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class ReviewSubmissionRequest(StrictModel):
+    reviewer_name: str | None = None
+    summary: str | None = None
+    review_state: ReviewState = ReviewState.reviewed
+    items: list[ReviewItemPayload] = Field(min_length=1)
+
+
+class ReviewItemRecord(StrictModel):
+    id: str
+    target_type: ReviewTargetType
+    target_key: str
+    action: ReviewAction
+    comment: str | None = None
+    replacement_text: str | None = None
+    confidence_override: float | None = None
+    created_at: datetime
+
+
+class ReviewSessionRecord(StrictModel):
+    id: str
+    run_id: str
+    reviewer_name: str | None = None
+    summary: str | None = None
+    review_state: ReviewState
+    created_at: datetime
+    updated_at: datetime
+    items: list[ReviewItemRecord] = Field(default_factory=list)
+
+
+class ReviewSubmissionResponse(StrictModel):
+    review: ReviewSessionRecord
 
 
 def now_utc() -> datetime:

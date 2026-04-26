@@ -22,6 +22,8 @@ class ConsensusMcpAdapter:
         if not self.settings.consensus_mcp_bridge_url:
             raise RuntimeError("Consensus MCP bridge not configured")
 
+        await self._assert_bridge_authenticated()
+
         body = {
             "hypothesis": context.parsed_hypothesis.original_text,
             "query": query,
@@ -37,6 +39,15 @@ class ConsensusMcpAdapter:
         sources = [self._normalize(item, context) for item in items[:5]]
         synthesis = payload.get("literature_synthesis") or payload.get("synthesis")
         return ProviderSearchResult(sources=sources, literature_synthesis=synthesis)
+
+    async def _assert_bridge_authenticated(self) -> None:
+        bridge_health = self.settings.consensus_mcp_bridge_url.removesuffix("/search") + "/health"
+        async with httpx.AsyncClient(timeout=min(self.settings.request_timeout_seconds, 5.0)) as client:
+            response = await client.get(bridge_health)
+            response.raise_for_status()
+        payload = response.json()
+        if not payload.get("authenticated"):
+            raise RuntimeError(payload.get("detail") or "Consensus bridge is reachable but not authenticated")
 
     def _normalize(self, item: dict[str, Any], context: SearchContext) -> EvidenceSource:
         title = item.get("title") or "Consensus literature synthesis result"

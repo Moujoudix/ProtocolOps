@@ -62,6 +62,8 @@ Literature QC runs sequentially so provider order, fallback decisions, and `prov
 
 - Controlled by `CONSENSUS_MCP_ENABLED=true`
 - If enabled, Consensus is always attempted first
+- Runtime access goes through the checked-in local Consensus sidecar, which exposes `POST /search`
+- The sidecar connects to `https://mcp.consensus.app/mcp` through `mcp-remote` so OAuth stays local to the developer machine
 - Cached by normalized hypothesis text in SQLite
 - Maximum 1 live Consensus call per normalized hypothesis
 - Cached results count as the first successful attempt

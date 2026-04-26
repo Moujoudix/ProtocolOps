@@ -65,6 +65,8 @@ class EvidencePackService:
                 searched_providers.extend(trace.provider for trace in bio_protocol_trace if trace.attempted)
 
         if parsed.domain_route == DomainRoute.cell_biology and not any(source.source_name == "ATCC" for source in sources):
+            if self.settings.strict_live_mode:
+                raise RuntimeError("Strict live mode forbids seeded HeLa evidence-pack fallback.")
             seeded = seeded_hela_sources()
             sources.extend(source for source in seeded if source.id in {
                 "seed-atcc-hela-culture",
