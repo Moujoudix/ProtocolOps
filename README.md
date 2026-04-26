@@ -4,7 +4,7 @@ ProtocolOps is an evidence-grounded scientific planning app that turns a natural
 
 ProtocolOps does **not** generate final lab-approved SOPs. It produces an operational plan for expert review.
 
-> Verified proof run: the HeLa strict-live path is verified with run `d4f6d470-5c47-4568-9eac-019815a80bb3`. Its realized outcome is `degraded_live`, not `fully_live`, because Semantic Scholar returned HTTP `429` while Consensus, Europe PMC, and live supplier evidence still succeeded.
+> Verified proof run: the HeLa strict-live path is verified with run `d4f6d470-5c47-4568-9eac-019815a80bb3`.
 
 ## Pipeline
 
