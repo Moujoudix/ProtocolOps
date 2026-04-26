@@ -1,0 +1,2 @@
+"""AI Scientist backend package."""
+
