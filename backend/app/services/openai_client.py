@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from app.core.config import Settings
 from app.models.schemas import (
     BudgetSummary,
@@ -151,15 +153,69 @@ def build_plan_prompt(
     evidence_pack: EvidencePack,
     review_memory: list[ReviewMemoryReference],
 ) -> str:
-    evidence_json = [source.model_dump(mode="json") for source in evidence_pack.sources]
-    memory_json = [memory.model_dump(mode="json") for memory in review_memory]
+    parsed_summary = {
+        "original_text": parsed.original_text,
+        "domain": parsed.domain,
+        "domain_route": parsed.domain_route.value,
+        "scientific_system": parsed.scientific_system,
+        "model_or_organism": parsed.model_or_organism,
+        "intervention": parsed.intervention,
+        "comparator": parsed.comparator,
+        "outcome_metric": parsed.outcome_metric,
+        "success_threshold": parsed.success_threshold,
+        "mechanism": parsed.mechanism,
+        "literature_query_terms": parsed.literature_query_terms[:6],
+        "protocol_query_terms": parsed.protocol_query_terms[:6],
+        "supplier_material_query_terms": parsed.supplier_material_query_terms[:6],
+        "safety_notes": parsed.safety_notes[:4],
+    }
+    literature_summary = {
+        "novelty_signal": literature_qc.novelty_signal.value,
+        "confidence": literature_qc.confidence,
+        "searched_sources": literature_qc.searched_sources,
+        "provider_trace": [
+            {
+                "provider": entry.provider,
+                "succeeded": entry.succeeded,
+                "cached": entry.cached,
+                "fallback_used": entry.fallback_used,
+                "result_count": entry.result_count,
+                "error": entry.error,
+            }
+            for entry in literature_qc.provider_trace[:6]
+        ],
+        "references": [
+            compact_source_record(source)
+            for source in literature_qc.references[:3]
+        ],
+        "literature_synthesis": compact_paragraph(literature_qc.literature_synthesis, 1200),
+        "gaps": literature_qc.gaps[:6],
+    }
+    evidence_summary = {
+        "domain_route": evidence_pack.domain_route.value,
+        "searched_providers": evidence_pack.searched_providers,
+        "used_seed_data": evidence_pack.used_seed_data,
+        "confidence_summary": evidence_pack.confidence_summary,
+        "evidence_gap_warnings": evidence_pack.evidence_gap_warnings[:8],
+        "checklists": [source.title for source in evidence_pack.checklists[:6]],
+        "sources": [compact_source_record(source) for source in evidence_pack.sources[:18]],
+    }
+    memory_summary = [
+        {
+            "target_type": memory.target_type.value,
+            "target_key": memory.target_key,
+            "action": memory.action.value,
+            "note": compact_paragraph(memory.note, 280),
+            "confidence": memory.confidence,
+        }
+        for memory in review_memory[:8]
+    ]
     return (
         "Create a review-ready experimental plan for this parsed hypothesis.\n\n"
-        f"Parsed hypothesis:\n{parsed.model_dump_json(indent=2)}\n\n"
-        f"Literature QC:\n{literature_qc.model_dump_json(indent=2)}\n\n"
-        f"Evidence pack:\n{evidence_pack.model_dump_json(indent=2)}\n\n"
-        f"Evidence sources:\n{evidence_json}\n\n"
-        f"Prior reviewed corrections for similar runs:\n{memory_json}\n\n"
+        f"Parsed hypothesis summary:\n{json.dumps(parsed_summary, indent=2)}\n\n"
+        f"Literature QC summary:\n{json.dumps(literature_summary, indent=2)}\n\n"
+        f"Evidence pack summary:\n{json.dumps(evidence_summary, indent=2)}\n\n"
+        f"Prior reviewed corrections for similar runs:\n{json.dumps(memory_summary, indent=2)}\n\n"
         "Required guardrails:\n"
         "- Use 'not found in searched sources'; do not say a hypothesis has never been done.\n"
         "- Distinguish exact_match, close_match, adjacent_method, generic_method, supplier_reference, safety_or_standard, and assumption evidence.\n"
@@ -171,6 +227,29 @@ def build_plan_prompt(
         f"- Domain-specific implementation notes for {parsed.domain_route.value}: {domain_specific_generation_notes(parsed.domain_route)}\n"
         "- If prior reviewed corrections exist, prefer them over generic assumptions and mention them in the plan only when relevant.\n"
     )
+
+
+def compact_source_record(source: EvidenceSource) -> dict[str, object]:
+    return {
+        "id": source.id,
+        "provider": source.source_name,
+        "title": source.title,
+        "url": source.url,
+        "evidence_type": source.evidence_type.value,
+        "trust_tier": source.trust_tier.value,
+        "trust_level": source.trust_level.value,
+        "confidence": source.confidence,
+        "snippet": compact_paragraph(source.snippet, 280),
+    }
+
+
+def compact_paragraph(value: str | None, limit: int) -> str | None:
+    if value is None:
+        return None
+    compacted = " ".join(value.split())
+    if len(compacted) <= limit:
+        return compacted
+    return compacted[: limit - 3] + "..."
 
 
 def heuristic_parse_hypothesis(hypothesis: str, preset_id: str | None = None) -> ParsedHypothesis:

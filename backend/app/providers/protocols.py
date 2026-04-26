@@ -126,7 +126,7 @@ class TavilyClient:
             "query": query,
             "search_depth": "basic",
             "max_results": max_results,
-            "include_answer": "none",
+            "include_answer": False,
             "include_raw_content": False,
             "include_usage": True,
         }

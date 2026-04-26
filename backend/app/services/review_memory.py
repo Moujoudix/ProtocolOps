@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pydantic import ValidationError
 from sqlmodel import Session, select
 
 from app.models.db import ReviewItem, ReviewSession, Run
@@ -20,7 +21,10 @@ class ReviewMemoryService:
         candidate_runs = session.exec(select(Run)).all()
         ranked_candidates: list[tuple[float, Run, ParsedHypothesis | None]] = []
         for run in candidate_runs:
-            run_parsed = model_from_json(ParsedHypothesis, run.parsed_hypothesis_json)
+            try:
+                run_parsed = model_from_json(ParsedHypothesis, run.parsed_hypothesis_json)
+            except ValidationError:
+                continue
             score = run_similarity_score(run, run_parsed, parsed, preset_id)
             if score <= 0:
                 continue

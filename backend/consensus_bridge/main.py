@@ -363,6 +363,10 @@ def consensus_auth_cached(settings: Settings) -> bool:
         auth_dir = os.path.join(home, ".mcp-auth")
         if not os.path.isdir(auth_dir):
             continue
-        if any(name.endswith(".json") or name.endswith(".sqlite") or name.endswith(".db") for name in os.listdir(auth_dir)):
-            return True
+        for root, _, filenames in os.walk(auth_dir):
+            if any(
+                name.endswith(".json") or name.endswith(".sqlite") or name.endswith(".db")
+                for name in filenames
+            ):
+                return True
     return False

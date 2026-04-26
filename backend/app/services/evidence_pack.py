@@ -80,7 +80,7 @@ class EvidencePackService:
                 provider_trace.extend(bio_protocol_trace)
                 searched_providers.extend(trace.provider for trace in bio_protocol_trace if trace.attempted)
 
-        if parsed.domain_route == DomainRoute.cell_biology and not any(source.source_name == "ATCC" for source in sources):
+        if parsed.domain_route == DomainRoute.cell_biology and not has_live_hela_atcc_source(sources):
             if self.settings.strict_live_mode:
                 raise RuntimeError("Strict live mode forbids seeded HeLa evidence-pack fallback.")
             seeded = seeded_hela_sources()
@@ -132,6 +132,11 @@ class EvidencePackService:
 
         sources = dedupe_sources(sources)
         provider_trace = dedupe_trace(provider_trace)
+        if self.settings.strict_live_mode:
+            seeded_ids = [source.id for source in sources if source.id.startswith("seed-")]
+            if used_seed_data or seeded_ids:
+                detail = ", ".join(seeded_ids[:5]) if seeded_ids else "seeded fallback detected"
+                raise RuntimeError(f"Strict live mode forbids seeded evidence-pack sources: {detail}")
         warnings = list(literature_qc.gaps or literature_qc.evidence_gap_warnings)
         if not sources:
             warnings.append("Evidence pack is sparse because no protocol, supplier, or checklist sources were retrieved.")
@@ -451,6 +456,24 @@ def standards_for_route(parsed: ParsedHypothesis, standard_names: list[str]) -> 
         elif name == "anaerobic_safety":
             resolved.append(anaerobic_safety_source())
     return resolved
+
+
+def has_live_hela_atcc_source(sources: list[EvidenceSource]) -> bool:
+    for source in sources:
+        if source.id.startswith("seed-"):
+            continue
+        candidate = " ".join(
+            value.lower()
+            for value in [
+                source.source_name,
+                source.title,
+                source.url or "",
+            ]
+            if value
+        )
+        if "atcc.org" in candidate or " atcc " in f" {candidate} " or "ccl-2" in candidate:
+            return True
+    return False
 
 
 def should_include_miqe(parsed: ParsedHypothesis) -> bool:

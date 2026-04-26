@@ -33,7 +33,13 @@ def infer_evidence_mode(
     elif literature_qc is not None:
         trace = literature_qc.provider_trace
 
-    if any(entry.cached for entry in trace):
+    searched_labels: list[str] = []
+    if literature_qc is not None:
+        searched_labels.extend(literature_qc.searched_sources)
+    if evidence_pack is not None:
+        searched_labels.extend(evidence_pack.searched_providers)
+
+    if "Cached live replay" in searched_labels or any(entry.cached and entry.fallback_used for entry in trace):
         return EvidenceMode.cached_live
 
     source_ids: list[str] = []
