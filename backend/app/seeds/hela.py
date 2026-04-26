@@ -1,5 +1,7 @@
 from app.models.schemas import (
     BudgetSummary,
+    DomainRoute,
+    EvidencePack,
     EvidenceSource,
     EvidenceType,
     ExperimentPlan,
@@ -8,7 +10,10 @@ from app.models.schemas import (
     MaterialItem,
     NoveltySignal,
     ParsedHypothesis,
+    PriceStatus,
+    ProcurementStatus,
     ProtocolStep,
+    TrustTier,
     now_utc,
 )
 
@@ -29,6 +34,7 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             title="Trehalose as an adjacent cryoprotection and membrane-stabilization evidence source",
             url=None,
             evidence_type=EvidenceType.adjacent_evidence,
+            trust_tier=TrustTier.inferred,
             snippet=(
                 "Adjacent literature supports trehalose as a cryoprotection-relevant disaccharide and "
                 "membrane stabilizer, but this seed does not establish an exact HeLa head-to-head result."
@@ -42,12 +48,13 @@ def seeded_hela_sources() -> list[EvidenceSource]:
         EvidenceSource(
             id="seed-atcc-hela-culture",
             source_name="ATCC",
-            title="ATCC HeLa cell information page",
+            title="ATCC HeLa cell line product page (CCL-2)",
             url="https://www.atcc.org/products/ccl-2",
             evidence_type=EvidenceType.supplier_evidence,
+            trust_tier=TrustTier.supplier_documentation,
             snippet=(
-                "Supplier context for the HeLa cell model. Catalog and ordering fields are not copied into "
-                "the plan unless directly retrieved by a live provider."
+                "Supplier documentation for the HeLa cell model. The validated catalog fact for this preset is "
+                "ATCC CCL-2."
             ),
             authors=[],
             year=None,
@@ -57,10 +64,11 @@ def seeded_hela_sources() -> list[EvidenceSource]:
         ),
         EvidenceSource(
             id="seed-thermo-cryopreservation",
-            source_name="Thermo Fisher Scientific",
-            title="Cell culture cryopreservation guidance",
+            source_name="Thermo Fisher Scientific / Gibco",
+            title="Gibco cell-freezing protocol guidance",
             url="https://www.thermofisher.com/us/en/home/references/gibco-cell-culture-basics/cell-culture-protocols/freezing-cells.html",
             evidence_type=EvidenceType.generic_protocol_evidence,
+            trust_tier=TrustTier.supplier_documentation,
             snippet=(
                 "Generic mammalian cell freezing guidance supports using an established controlled freezing "
                 "and thawing workflow as the comparator protocol backbone."
@@ -74,12 +82,12 @@ def seeded_hela_sources() -> list[EvidenceSource]:
         EvidenceSource(
             id="seed-promega-viability",
             source_name="Promega",
-            title="Cell viability assay overview",
+            title="Promega CellTiter-Glo viability assay guidance",
             url="https://www.promega.com/resources/guides/cell-biology/cell-viability-assays/",
             evidence_type=EvidenceType.supplier_evidence,
+            trust_tier=TrustTier.supplier_documentation,
             snippet=(
-                "Supplier evidence for common cell viability assay options that can quantify post-thaw "
-                "viability as an endpoint."
+                "Supplier evidence for CellTiter-Glo as a post-thaw viability measurement option for this demo path."
             ),
             authors=[],
             year=None,
@@ -93,6 +101,7 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             title="Trehalose supplier context",
             url="https://www.sigmaaldrich.com/US/en/search/trehalose",
             evidence_type=EvidenceType.supplier_evidence,
+            trust_tier=TrustTier.supplier_documentation,
             snippet=(
                 "Supplier context indicates trehalose is commercially available; exact catalog numbers and "
                 "prices must be checked live before procurement."
@@ -104,11 +113,46 @@ def seeded_hela_sources() -> list[EvidenceSource]:
             retrieved_at=retrieved_at,
         ),
         EvidenceSource(
+            id="seed-protocolsio-fallback",
+            source_name="protocols.io fallback",
+            title="Community cryopreservation protocol scaffold",
+            url="https://www.protocols.io/",
+            evidence_type=EvidenceType.generic_protocol_evidence,
+            trust_tier=TrustTier.community_protocol,
+            snippet=(
+                "Community protocol evidence can support procedural scaffolding, but it should not be treated "
+                "as an exact validated HeLa trehalose SOP."
+            ),
+            authors=[],
+            year=None,
+            doi=None,
+            confidence=0.51,
+            retrieved_at=retrieved_at,
+        ),
+        EvidenceSource(
+            id="seed-openwetware-fallback",
+            source_name="OpenWetWare fallback",
+            title="Community wet-lab workflow scaffold",
+            url="https://openwetware.org/wiki/Main_Page",
+            evidence_type=EvidenceType.generic_protocol_evidence,
+            trust_tier=TrustTier.community_protocol,
+            snippet=(
+                "Community wet-lab sources can provide procedural structure but remain expert-review-required "
+                "for exact parameters."
+            ),
+            authors=[],
+            year=None,
+            doi=None,
+            confidence=0.49,
+            retrieved_at=retrieved_at,
+        ),
+        EvidenceSource(
             id="seed-assumption-expert-review",
             source_name="MVP assumption",
             title="Experimental design assumptions requiring scientist review",
             url=None,
             evidence_type=EvidenceType.assumption,
+            trust_tier=TrustTier.inferred,
             snippet=(
                 "Treatment concentrations, freeze/thaw parameters, replicate count, and acceptance criteria "
                 "must be approved by a qualified scientist before lab execution."
@@ -126,6 +170,7 @@ def seeded_hela_parsed(hypothesis: str) -> ParsedHypothesis:
     return ParsedHypothesis(
         original_text=hypothesis,
         domain="cell biology / cryopreservation",
+        domain_route=DomainRoute.cell_biology,
         organism_or_system="HeLa cells",
         intervention="trehalose-containing freezing medium",
         comparator="standard DMSO cryopreservation protocol",
@@ -159,11 +204,17 @@ def seeded_hela_literature_qc() -> LiteratureQC:
     )
 
 
-def seeded_hela_plan(parsed: ParsedHypothesis, literature_qc: LiteratureQC, live_sources: list[EvidenceSource]) -> ExperimentPlan:
-    sources = merge_sources(seeded_hela_sources() + live_sources + literature_qc.references)
+def seeded_hela_plan_from_evidence_pack(
+    parsed: ParsedHypothesis,
+    literature_qc: LiteratureQC,
+    evidence_pack: EvidencePack,
+) -> ExperimentPlan:
+    sources = merge_sources(evidence_pack.sources + literature_qc.references)
     source_ids = [source.id for source in sources]
     protocol_source_ids = [
         "seed-thermo-cryopreservation",
+        "seed-protocolsio-fallback",
+        "seed-openwetware-fallback",
         "seed-lit-trehalose-cryoprotection",
         "seed-assumption-expert-review",
     ]
@@ -173,11 +224,12 @@ def seeded_hela_plan(parsed: ParsedHypothesis, literature_qc: LiteratureQC, live
         MaterialItem(
             name="Authenticated HeLa cell stock",
             role="Experimental cell model",
-            vendor="ATCC or existing authenticated lab source",
-            catalog_number=None,
+            vendor="ATCC",
+            catalog_number="CCL-2",
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.verified,
+            price_status=PriceStatus.contact_supplier,
             evidence_source_ids=["seed-atcc-hela-culture"],
             notes="Confirm source, passage range, mycoplasma status, and cell-line authentication before use.",
             confidence=0.72,
@@ -185,11 +237,12 @@ def seeded_hela_plan(parsed: ParsedHypothesis, literature_qc: LiteratureQC, live
         MaterialItem(
             name="Standard DMSO cryopreservation medium",
             role="Comparator arm",
-            vendor=None,
+            vendor="Gibco or approved lab source",
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.contact_supplier,
             evidence_source_ids=["seed-thermo-cryopreservation"],
             notes="Use the lab's approved standard DMSO-containing freezing workflow as comparator.",
             confidence=0.7,
@@ -197,23 +250,25 @@ def seeded_hela_plan(parsed: ParsedHypothesis, literature_qc: LiteratureQC, live
         MaterialItem(
             name="Trehalose",
             role="Candidate cryoprotectant",
-            vendor="Sigma-Aldrich or equivalent qualified supplier",
+            vendor="Sigma-Aldrich",
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.contact_supplier,
             evidence_source_ids=["seed-sigma-trehalose", "seed-lit-trehalose-cryoprotection"],
             notes="Catalog number, grade, sterility, endotoxin status, and price require procurement check.",
             confidence=0.63,
         ),
         MaterialItem(
-            name="Cell viability assay reagent or validated counting method",
+            name="Promega CellTiter-Glo or validated counting method",
             role="Post-thaw viability endpoint",
-            vendor="Promega or validated lab method",
+            vendor="Promega",
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.contact_supplier,
             evidence_source_ids=["seed-promega-viability"],
             notes="Select the endpoint method before execution and document linear range and acceptance criteria.",
             confidence=0.7,
@@ -225,7 +280,8 @@ def seeded_hela_plan(parsed: ParsedHypothesis, literature_qc: LiteratureQC, live
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.requires_procurement_check,
             evidence_source_ids=["seed-thermo-cryopreservation"],
             notes="Use validated lab equipment and storage conditions; do not infer exact equipment specs from this MVP.",
             confidence=0.68,
@@ -439,4 +495,3 @@ def merge_sources(sources: list[EvidenceSource]) -> list[EvidenceSource]:
         seen.add(source.id)
         merged.append(source)
     return merged
-

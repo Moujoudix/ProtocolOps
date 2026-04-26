@@ -38,9 +38,15 @@ def test_hela_flow_completes_without_external_keys():
     assert plan_response.status_code == 200
     plan = plan_response.json()["plan"]
     assert plan["status_label"] == "SOP draft for expert review"
-    assert plan["protocol"][0]["evidence_source_ids"]
-    assert all(item["catalog_number"] is None for item in plan["materials"])
+    assert all(step["evidence_source_ids"] for step in plan["protocol"])
+    assert plan["materials"][0]["catalog_number"] == "CCL-2"
     assert all(item["requires_procurement_check"] for item in plan["materials"])
+    assert all(item["procurement_status"] == "requires_procurement_check" for item in plan["materials"][1:])
+    assert all(
+        item["price_status"] in {"requires_procurement_check", "contact_supplier"}
+        for item in plan["budget"]["items"]
+        if item["price"] is None
+    )
 
 
 def test_plan_requires_literature_qc_first():
@@ -54,6 +60,7 @@ def test_plan_requires_literature_qc_first():
             response = client.post("/api/runs/no-qc-run/plan")
 
     assert response.status_code == 409
+    assert response.json()["detail"] == "Literature QC must complete before plan generation"
 
 
 def test_allowed_origin_receives_cors_header():
@@ -97,4 +104,3 @@ def test_disallowed_origin_does_not_receive_cors_header():
 
     assert response.status_code == 200
     assert "access-control-allow-origin" not in response.headers
-

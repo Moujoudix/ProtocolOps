@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 from app.core.config import Settings
-from app.models.schemas import EvidenceSource, EvidenceType, now_utc
+from app.models.schemas import EvidenceSource, EvidenceType, TrustTier, now_utc
 from app.providers.base import SearchContext
 from app.providers.utils import classify_evidence, compact_text, stable_source_id
 
@@ -52,6 +52,7 @@ class SemanticScholarProvider:
             title=title,
             url=item.get("url"),
             evidence_type=evidence_type,
+            trust_tier=TrustTier.literature_database,
             snippet=snippet,
             authors=authors[:6],
             year=item.get("year"),
@@ -103,6 +104,7 @@ class EuropePmcProvider:
             title=title,
             url=url,
             evidence_type=evidence_type,
+            trust_tier=TrustTier.literature_database,
             snippet=snippet,
             authors=[name.strip() for name in (item.get("authorString") or "").split(",") if name.strip()][:6],
             year=_safe_int(item.get("pubYear")),
@@ -117,4 +119,3 @@ def _safe_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
-

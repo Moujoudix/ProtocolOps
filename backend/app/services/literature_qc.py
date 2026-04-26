@@ -3,19 +3,16 @@ import asyncio
 from app.core.config import Settings
 from app.models.schemas import EvidenceSource, EvidenceType, LiteratureQC, NoveltySignal
 from app.providers.base import SearchContext
-from app.providers.literature import EuropePmcProvider, SemanticScholarProvider
 from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_literature_qc, seeded_hela_sources
+from app.services.source_router import SourceRouter
 
 
 class LiteratureQcService:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.providers = [SemanticScholarProvider(settings), EuropePmcProvider(settings)]
+        self.router = SourceRouter(settings)
 
     async def run(self, context: SearchContext) -> LiteratureQC:
-        if should_use_seed_only(self.settings, context):
-            return seeded_hela_literature_qc()
-
         if self.settings.app_env == "test" and is_hela_trehalose_hypothesis(
             context.parsed_hypothesis.original_text,
             context.preset_id,
@@ -23,8 +20,9 @@ class LiteratureQcService:
             return seeded_hela_literature_qc()
 
         query = build_literature_query(context)
+        providers = self.router.literature_providers(context.parsed_hypothesis.domain_route)
         provider_results = await asyncio.gather(
-            *(provider.search(query, context) for provider in self.providers),
+            *(provider.search(query, context) for provider in providers),
             return_exceptions=True,
         )
         sources: list[EvidenceSource] = []
@@ -37,7 +35,7 @@ class LiteratureQcService:
             sources = merge_by_id(seeded_hela_sources() + sources)
 
         top_refs = sorted(sources, key=lambda source: source.confidence, reverse=True)[:3]
-        searched_sources = [provider.name for provider in self.providers]
+        searched_sources = [provider.name for provider in providers]
         if is_hela_trehalose_hypothesis(context.parsed_hypothesis.original_text, context.preset_id):
             searched_sources.append("HeLa demo seed")
 
@@ -118,9 +116,3 @@ def merge_by_id(sources: list[EvidenceSource]) -> list[EvidenceSource]:
         seen.add(source.id)
         merged.append(source)
     return merged
-
-
-def should_use_seed_only(settings: Settings, context: SearchContext) -> bool:
-    is_seeded_demo = is_hela_trehalose_hypothesis(context.parsed_hypothesis.original_text, context.preset_id)
-    has_live_keys = bool(settings.semantic_scholar_api_key or settings.tavily_api_key or settings.protocols_io_token)
-    return is_seeded_demo and not has_live_keys

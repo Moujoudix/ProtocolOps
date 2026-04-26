@@ -69,6 +69,7 @@ describe("App", () => {
             parsed_hypothesis: {
               original_text: presets[3].hypothesis,
               domain: "cell biology",
+              domain_route: "cell_biology",
               organism_or_system: "HeLa cells",
               intervention: "trehalose",
               comparator: "DMSO",
@@ -102,4 +103,3 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: /generate review-ready plan/i })).toBeEnabled());
   });
 });
-

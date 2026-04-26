@@ -3,6 +3,8 @@ from __future__ import annotations
 from app.core.config import Settings
 from app.models.schemas import (
     BudgetSummary,
+    DomainRoute,
+    EvidencePack,
     EvidenceSource,
     EvidenceType,
     ExperimentPlan,
@@ -10,10 +12,14 @@ from app.models.schemas import (
     LiteratureQC,
     MaterialItem,
     ParsedHypothesis,
+    PriceStatus,
+    ProcurementStatus,
     ProtocolStep,
+    TrustTier,
     now_utc,
 )
-from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_parsed, seeded_hela_plan
+from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_parsed, seeded_hela_plan_from_evidence_pack
+from app.services.domain_routing import domain_label_for_route, resolve_domain_route
 
 
 class OpenAIStructuredClient:
@@ -37,7 +43,7 @@ class OpenAIStructuredClient:
             return seeded_hela_parsed(hypothesis)
 
         if not self.enabled:
-            return heuristic_parse_hypothesis(hypothesis)
+            return heuristic_parse_hypothesis(hypothesis, preset_id=preset_id)
 
         try:
             response = await self._get_client().responses.parse(
@@ -47,31 +53,32 @@ class OpenAIStructuredClient:
                         "role": "system",
                         "content": (
                             "Extract a scientific hypothesis into structured fields. Keep uncertain fields null. "
-                            "Return concise key terms for evidence retrieval. JSON must match the schema."
+                            "Return concise key terms for evidence retrieval. Set domain_route to one of: "
+                            "cell_biology, diagnostics_biosensor, animal_gut_health, microbial_electrochemistry. "
+                            "JSON must match the schema."
                         ),
                     },
                     {"role": "user", "content": hypothesis},
                 ],
                 text_format=ParsedHypothesis,
             )
-            return response.output_parsed
+            return normalize_parsed_hypothesis(response.output_parsed, hypothesis, preset_id)
         except Exception:
-            return heuristic_parse_hypothesis(hypothesis)
+            return heuristic_parse_hypothesis(hypothesis, preset_id=preset_id)
 
     async def generate_plan(
         self,
         parsed: ParsedHypothesis,
         literature_qc: LiteratureQC,
-        evidence_sources: list[EvidenceSource],
+        evidence_pack: EvidencePack,
         preset_id: str | None = None,
     ) -> ExperimentPlan:
-        if is_hela_trehalose_hypothesis(parsed.original_text, preset_id):
-            return seeded_hela_plan(parsed, literature_qc, evidence_sources)
-
         if not self.enabled:
-            return generic_review_plan(parsed, literature_qc, evidence_sources)
+            if is_hela_trehalose_hypothesis(parsed.original_text, preset_id):
+                return seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack)
+            return generic_review_plan(parsed, literature_qc, evidence_pack)
 
-        prompt = build_plan_prompt(parsed, literature_qc, evidence_sources)
+        prompt = build_plan_prompt(parsed, literature_qc, evidence_pack)
         try:
             response = await self._get_client().responses.parse(
                 model=self.settings.openai_plan_model,
@@ -82,15 +89,15 @@ class OpenAIStructuredClient:
                             "You generate evidence-grounded review-ready experimental plans. Never invent catalog "
                             "numbers, exact prices, concentrations, timings, or validated protocol parameters. If "
                             "a value is not directly retrieved in the evidence pack, leave nullable fields null and "
-                            "mark procurement or expert review checks. Every protocol step must cite evidence source "
-                            "IDs and include confidence."
+                            "mark procurement, price, or expert review checks. Every protocol step must cite "
+                            "evidence source IDs and include confidence."
                         ),
                     },
                     {"role": "user", "content": prompt},
                 ],
                 text_format=ExperimentPlan,
             )
-            return response.output_parsed
+            return apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack)
         except Exception:
             try:
                 response = await self._get_client().responses.parse(
@@ -101,43 +108,38 @@ class OpenAIStructuredClient:
                     ],
                     text_format=ExperimentPlan,
                 )
-                return response.output_parsed
+                return apply_plan_guardrails(response.output_parsed, parsed, literature_qc, evidence_pack)
             except Exception:
-                return generic_review_plan(parsed, literature_qc, evidence_sources)
+                if is_hela_trehalose_hypothesis(parsed.original_text, preset_id):
+                    return seeded_hela_plan_from_evidence_pack(parsed, literature_qc, evidence_pack)
+                return generic_review_plan(parsed, literature_qc, evidence_pack)
 
 
-def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evidence_sources: list[EvidenceSource]) -> str:
-    evidence_json = [source.model_dump(mode="json") for source in evidence_sources]
+def build_plan_prompt(parsed: ParsedHypothesis, literature_qc: LiteratureQC, evidence_pack: EvidencePack) -> str:
+    evidence_json = [source.model_dump(mode="json") for source in evidence_pack.sources]
     return (
         "Create a review-ready experimental plan for this parsed hypothesis.\n\n"
         f"Parsed hypothesis:\n{parsed.model_dump_json(indent=2)}\n\n"
         f"Literature QC:\n{literature_qc.model_dump_json(indent=2)}\n\n"
+        f"Evidence pack:\n{evidence_pack.model_dump_json(indent=2)}\n\n"
         f"Evidence sources:\n{evidence_json}\n\n"
         "Required guardrails:\n"
         "- Use 'not found in searched sources'; do not say a hypothesis has never been done.\n"
         "- Distinguish exact, adjacent, generic protocol, supplier, and assumption evidence.\n"
+        "- Treat trust tiers as literature_database, supplier_documentation, community_protocol, or inferred.\n"
         "- Every protocol step needs evidence_source_ids, confidence, and expert_review_required.\n"
         "- Leave catalog_number, price, and currency null unless directly retrieved.\n"
-        "- Mark requires_procurement_check true when catalog or price is missing.\n"
+        "- Use procurement_status and price_status conservatively.\n"
         "- Use 'review-ready experimental plan' or 'SOP draft for expert review'.\n"
     )
 
 
-def heuristic_parse_hypothesis(hypothesis: str) -> ParsedHypothesis:
-    lowered = hypothesis.lower()
-    domain = "general life sciences"
-    if "biosensor" in lowered or "crp" in lowered:
-        domain = "diagnostics"
-    elif "mouse" in lowered or "lactobacillus" in lowered:
-        domain = "gut health / animal study"
-    elif "sporomusa" in lowered or "co2" in lowered:
-        domain = "climate biotech"
-    elif "hela" in lowered:
-        domain = "cell biology"
-
+def heuristic_parse_hypothesis(hypothesis: str, preset_id: str | None = None) -> ParsedHypothesis:
+    domain_route = resolve_domain_route(hypothesis, preset_id)
     return ParsedHypothesis(
         original_text=hypothesis,
-        domain=domain,
+        domain=domain_label_for_route(domain_route),
+        domain_route=domain_route,
         organism_or_system=_first_present(
             hypothesis,
             ["HeLa cells", "whole blood", "C57BL/6 mice", "Sporomusa ovata", "bioelectrochemical system"],
@@ -197,12 +199,22 @@ def _phrase_after(text: str, markers: list[str]) -> str | None:
     return None
 
 
+def normalize_parsed_hypothesis(
+    parsed: ParsedHypothesis,
+    hypothesis: str,
+    preset_id: str | None,
+) -> ParsedHypothesis:
+    domain_route = resolve_domain_route(hypothesis, preset_id) if preset_id else parsed.domain_route
+    domain = domain_label_for_route(domain_route) if preset_id else (parsed.domain or domain_label_for_route(domain_route))
+    return parsed.model_copy(update={"domain_route": domain_route, "domain": domain})
+
+
 def generic_review_plan(
     parsed: ParsedHypothesis,
     literature_qc: LiteratureQC,
-    evidence_sources: list[EvidenceSource],
+    evidence_pack: EvidencePack,
 ) -> ExperimentPlan:
-    sources = evidence_sources or literature_qc.references
+    sources = evidence_pack.sources or literature_qc.references
     if not sources:
         sources = [
             EvidenceSource(
@@ -211,6 +223,7 @@ def generic_review_plan(
                 title="No live provider evidence returned",
                 url=None,
                 evidence_type=EvidenceType.assumption,
+                trust_tier=TrustTier.inferred,
                 snippet="The plan is intentionally high-level because searched providers returned no usable evidence.",
                 authors=[],
                 year=None,
@@ -230,7 +243,8 @@ def generic_review_plan(
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.requires_procurement_check,
             evidence_source_ids=[assumption_id],
             notes="Exact model sourcing must be checked by a scientist or procurement owner.",
             confidence=0.35,
@@ -242,7 +256,8 @@ def generic_review_plan(
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.requires_procurement_check,
             evidence_source_ids=[assumption_id],
             notes="Comparator materials are hypothesis-dependent and not finalized by this MVP.",
             confidence=0.32,
@@ -254,7 +269,8 @@ def generic_review_plan(
             catalog_number=None,
             price=None,
             currency=None,
-            requires_procurement_check=True,
+            procurement_status=ProcurementStatus.requires_procurement_check,
+            price_status=PriceStatus.requires_procurement_check,
             evidence_source_ids=[assumption_id],
             notes="Assay choice, validation range, and procurement details require expert review.",
             confidence=0.32,
@@ -384,3 +400,86 @@ def generic_review_plan(
         generated_at=now_utc(),
     )
 
+
+def apply_plan_guardrails(
+    plan: ExperimentPlan,
+    parsed: ParsedHypothesis,
+    literature_qc: LiteratureQC,
+    evidence_pack: EvidencePack,
+) -> ExperimentPlan:
+    known_sources = evidence_pack.sources or literature_qc.references
+    if not known_sources:
+        known_sources = [
+            EvidenceSource(
+                id="assumption-no-live-evidence",
+                source_name="MVP assumption",
+                title="No live provider evidence returned",
+                url=None,
+                evidence_type=EvidenceType.assumption,
+                trust_tier=TrustTier.inferred,
+                snippet="The plan is intentionally conservative because the evidence pack was empty.",
+                authors=[],
+                year=None,
+                doi=None,
+                confidence=0.25,
+                retrieved_at=now_utc(),
+            )
+        ]
+    known_source_ids = {source.id for source in known_sources}
+    fallback_id = next((source.id for source in known_sources if source.trust_tier == TrustTier.inferred), None)
+    if fallback_id is None and known_sources:
+        fallback_id = known_sources[-1].id
+
+    def sanitize_ids(source_ids: list[str]) -> list[str]:
+        valid = [source_id for source_id in source_ids if source_id in known_source_ids]
+        if valid:
+            return valid
+        return [fallback_id] if fallback_id else source_ids
+
+    plan.overview.evidence_source_ids = sanitize_ids(plan.overview.evidence_source_ids)
+    plan.study_design.evidence_source_ids = sanitize_ids(plan.study_design.evidence_source_ids)
+    plan.timeline.evidence_source_ids = sanitize_ids(plan.timeline.evidence_source_ids)
+    plan.validation.evidence_source_ids = sanitize_ids(plan.validation.evidence_source_ids)
+    plan.risks.evidence_source_ids = sanitize_ids(plan.risks.evidence_source_ids)
+
+    has_protocol_support = has_retrieved_protocol_support(evidence_pack)
+    normalized_protocol: list[ProtocolStep] = []
+    for step in plan.protocol:
+        step.evidence_source_ids = sanitize_ids(step.evidence_source_ids)
+        if parsed.domain_route != DomainRoute.cell_biology and not has_protocol_support:
+            step.confidence = min(step.confidence, 0.45)
+            step.expert_review_required = True
+            if not step.review_reason:
+                step.review_reason = "Protocol evidence is limited for this preset and requires expert review."
+        normalized_protocol.append(ProtocolStep.model_validate(step.model_dump()))
+
+    normalized_materials: list[MaterialItem] = []
+    for material in plan.materials:
+        material.evidence_source_ids = sanitize_ids(material.evidence_source_ids)
+        normalized_materials.append(MaterialItem.model_validate(material.model_dump()))
+
+    normalized_budget_items: list[MaterialItem] = []
+    for item in plan.budget.items:
+        item.evidence_source_ids = sanitize_ids(item.evidence_source_ids)
+        normalized_budget_items.append(MaterialItem.model_validate(item.model_dump()))
+
+    plan.protocol = normalized_protocol
+    plan.materials = normalized_materials
+    plan.budget.items = normalized_budget_items
+    plan.budget.evidence_source_ids = sanitize_ids(plan.budget.evidence_source_ids)
+    plan.literature_qc = literature_qc
+    plan.sources = known_sources
+    return ExperimentPlan.model_validate(plan.model_dump())
+
+
+def has_retrieved_protocol_support(evidence_pack: EvidencePack) -> bool:
+    for source in evidence_pack.sources:
+        if source.trust_tier == TrustTier.inferred:
+            continue
+        if source.evidence_type in {
+            EvidenceType.exact_evidence,
+            EvidenceType.adjacent_evidence,
+            EvidenceType.generic_protocol_evidence,
+        }:
+            return True
+    return False

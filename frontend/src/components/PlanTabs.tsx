@@ -36,6 +36,7 @@ type Tab = (typeof tabLabels)[number];
 export function PlanTabs({ plan, parsedHypothesis }: PlanTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const sourceById = useMemo(() => new Map(plan.sources.map((source) => [source.id, source])), [plan.sources]);
+  const sourceUsage = useMemo(() => buildSourceUsage(plan), [plan]);
 
   return (
     <section className="enter-up rounded-md border border-zinc-200 bg-white shadow-crisp">
@@ -79,7 +80,7 @@ export function PlanTabs({ plan, parsedHypothesis }: PlanTabsProps) {
         {activeTab === "Timeline" && <SectionView section={plan.timeline} sourceById={sourceById} />}
         {activeTab === "Validation" && <SectionView section={plan.validation} sourceById={sourceById} />}
         {activeTab === "Risks" && <SectionView section={plan.risks} sourceById={sourceById} warning />}
-        {activeTab === "Sources" && <SourcesView sources={plan.sources} />}
+        {activeTab === "Sources" && <SourcesView sources={plan.sources} sourceUsage={sourceUsage} />}
       </div>
     </section>
   );
@@ -89,6 +90,7 @@ function fallbackParsedHypothesis(plan: ExperimentPlan): ParsedHypothesis {
   return {
     original_text: plan.overview.bullets[0] ?? plan.plan_title,
     domain: plan.plan_title,
+    domain_route: "cell_biology",
     organism_or_system: null,
     intervention: null,
     comparator: null,
@@ -215,9 +217,12 @@ function MaterialsView({ materials, sourceById }: { materials: MaterialItem[]; s
           <span className="break-words text-zinc-700">{item.catalog_number ?? "Null"}</span>
           <div className="space-y-2">
             <Badge tone={item.requires_procurement_check ? "amber" : "green"}>
-              {item.requires_procurement_check ? "Requires check" : "Verified"}
+              {item.requires_procurement_check ? "Requires procurement check" : "Source-backed"}
             </Badge>
-            <p className="text-xs text-zinc-500">Price: {item.price ?? "Null"}</p>
+            {item.price_status === "contact_supplier" && <Badge tone="blue">Contact supplier</Badge>}
+            <p className="text-xs text-zinc-500">
+              Price: {item.price ?? "Null"} | Status: {humanizePriceStatus(item.price_status)}
+            </p>
             <div className="hidden lg:block">
               <SourceChips ids={item.evidence_source_ids} sourceById={sourceById} />
             </div>
@@ -247,20 +252,30 @@ function BudgetView({ budget, sourceById }: { budget: BudgetSummary; sourceById:
   );
 }
 
-function SourcesView({ sources }: { sources: EvidenceSource[] }) {
+function SourcesView({ sources, sourceUsage }: { sources: EvidenceSource[]; sourceUsage: Map<string, string[]> }) {
   return (
     <div className="space-y-4">
       {sources.map((source) => (
         <article key={source.id} className="rounded-md border border-zinc-200 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{source.id}</Badge>
+            <Badge tone={trustTierTone(source.trust_tier)}>{humanizeTrustTier(source.trust_tier)}</Badge>
+            <Badge tone={evidenceTone(source)}>{humanizeEvidenceClass(source)}</Badge>
             <ConfidenceBadge value={source.confidence} />
           </div>
           <h3 className="mt-2 text-sm font-semibold text-zinc-950">{source.title}</h3>
           <p className="mt-2 text-sm leading-6 text-zinc-700">{source.snippet}</p>
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <MetaField label="Provider" value={source.source_name} />
+            <MetaField label="Trust tier" value={humanizeTrustTier(source.trust_tier)} />
+            <MetaField label="Evidence class" value={humanizeEvidenceClass(source)} />
+            <MetaField label="Used in sections" value={(sourceUsage.get(source.id) ?? ["Not referenced"]).join(", ")} />
+            <MetaField label="Confidence" value={`${Math.round(source.confidence * 100)}%`} />
+            <MetaField label="URL" value={source.url ?? "Not available"} />
+          </dl>
           {source.url && (
             <a className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700" href={source.url} target="_blank" rel="noreferrer">
-              {source.source_name}
+              Open source
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
@@ -276,11 +291,107 @@ function SourceChips({ ids, sourceById }: { ids: string[]; sourceById: Map<strin
       {ids.map((id) => {
         const source = sourceById.get(id);
         return (
-          <Badge key={id} tone={source?.evidence_type === "assumption" ? "red" : source?.evidence_type === "supplier_evidence" ? "blue" : "neutral"}>
+          <Badge key={id} tone={source?.trust_tier === "inferred" ? "red" : source?.trust_tier === "supplier_documentation" ? "blue" : "neutral"}>
             {id}
           </Badge>
         );
       })}
+    </div>
+  );
+}
+
+function buildSourceUsage(plan: ExperimentPlan): Map<string, string[]> {
+  const usage = new Map<string, Set<string>>();
+
+  const track = (sourceIds: string[], label: string) => {
+    sourceIds.forEach((sourceId) => {
+      if (!usage.has(sourceId)) {
+        usage.set(sourceId, new Set());
+      }
+      usage.get(sourceId)!.add(label);
+    });
+  };
+
+  track(plan.overview.evidence_source_ids, "Overview");
+  plan.literature_qc.references.forEach((source) => track([source.id], "Literature QC"));
+  track(plan.study_design.evidence_source_ids, "Study Design");
+  plan.protocol.forEach((step) => track(step.evidence_source_ids, `Protocol step ${step.step_number}`));
+  plan.materials.forEach((material) => track(material.evidence_source_ids, `Materials: ${material.name}`));
+  track(plan.budget.evidence_source_ids, "Budget");
+  plan.budget.items.forEach((item) => track(item.evidence_source_ids, `Budget: ${item.name}`));
+  track(plan.timeline.evidence_source_ids, "Timeline");
+  track(plan.validation.evidence_source_ids, "Validation");
+  track(plan.risks.evidence_source_ids, "Risks");
+
+  return new Map(Array.from(usage.entries()).map(([sourceId, labels]) => [sourceId, Array.from(labels)]));
+}
+
+function humanizeTrustTier(trustTier: EvidenceSource["trust_tier"]) {
+  const labels: Record<EvidenceSource["trust_tier"], string> = {
+    literature_database: "Literature database",
+    supplier_documentation: "Supplier documentation",
+    community_protocol: "Community source",
+    inferred: "Inferred / expert review required",
+  };
+  return labels[trustTier];
+}
+
+function humanizeEvidenceClass(source: EvidenceSource) {
+  if (source.trust_tier === "community_protocol") {
+    return "Community source";
+  }
+  if (source.trust_tier === "inferred" || source.evidence_type === "assumption") {
+    return "Inferred / expert review required";
+  }
+  if (source.evidence_type === "adjacent_evidence") {
+    return "Adjacent evidence";
+  }
+  if (source.trust_tier === "supplier_documentation" || source.evidence_type === "exact_evidence") {
+    return "Source-backed";
+  }
+  if (source.evidence_type === "generic_protocol_evidence") {
+    return "Generic protocol evidence";
+  }
+  return "Source-backed";
+}
+
+function trustTierTone(trustTier: EvidenceSource["trust_tier"]): "green" | "amber" | "red" | "blue" {
+  if (trustTier === "supplier_documentation" || trustTier === "literature_database") {
+    return "green";
+  }
+  if (trustTier === "community_protocol") {
+    return "blue";
+  }
+  return "red";
+}
+
+function evidenceTone(source: EvidenceSource): "green" | "amber" | "red" | "blue" {
+  if (source.evidence_type === "adjacent_evidence") {
+    return "amber";
+  }
+  if (source.trust_tier === "community_protocol") {
+    return "blue";
+  }
+  if (source.trust_tier === "inferred" || source.evidence_type === "assumption") {
+    return "red";
+  }
+  return "green";
+}
+
+function humanizePriceStatus(status: MaterialItem["price_status"]) {
+  const labels: Record<MaterialItem["price_status"], string> = {
+    visible_price: "visible price",
+    requires_procurement_check: "requires procurement check",
+    contact_supplier: "contact supplier",
+  };
+  return labels[status];
+}
+
+function MetaField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</dt>
+      <dd className="mt-1 break-words text-zinc-800">{value}</dd>
     </div>
   );
 }

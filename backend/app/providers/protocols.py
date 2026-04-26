@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 from app.core.config import Settings
-from app.models.schemas import EvidenceSource, EvidenceType, now_utc
+from app.models.schemas import EvidenceSource, EvidenceType, TrustTier, now_utc
 from app.providers.base import SearchContext
 from app.providers.utils import compact_text, host_from_url, stable_source_id
 
@@ -46,6 +46,7 @@ class ProtocolsIoProvider:
             title=item.get("title") or "Untitled protocols.io result",
             url=url,
             evidence_type=EvidenceType.generic_protocol_evidence,
+            trust_tier=TrustTier.community_protocol,
             snippet=compact_text(item.get("description") or item.get("materials_text") or "Public protocol metadata result."),
             authors=[],
             year=None,
@@ -88,6 +89,7 @@ class OpenWetWareProvider:
             title=title,
             url=f"https://openwetware.org/wiki/{title.replace(' ', '_')}",
             evidence_type=EvidenceType.generic_protocol_evidence,
+            trust_tier=TrustTier.community_protocol,
             snippet=compact_text(item.get("snippet") or "OpenWetWare search result."),
             authors=[],
             year=None,
@@ -144,6 +146,7 @@ class TavilyProvider:
             title=item.get("title") or "Untitled Tavily result",
             url=url,
             evidence_type=evidence_type,
+            trust_tier=TrustTier.supplier_documentation if self.include_domains else TrustTier.community_protocol,
             snippet=compact_text(item.get("content") or "Tavily search result."),
             authors=[],
             year=None,
@@ -151,4 +154,3 @@ class TavilyProvider:
             confidence=0.56 if evidence_type == EvidenceType.supplier_evidence else 0.5,
             retrieved_at=now_utc(),
         )
-

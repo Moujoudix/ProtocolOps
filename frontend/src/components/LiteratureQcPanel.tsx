@@ -14,14 +14,6 @@ const noveltyLabels: Record<LiteratureQC["novelty_signal"], string> = {
   not_found_in_searched_sources: "Not found in searched sources",
 };
 
-const evidenceLabels: Record<EvidenceSource["evidence_type"], string> = {
-  exact_evidence: "Exact",
-  adjacent_evidence: "Adjacent",
-  generic_protocol_evidence: "Generic protocol",
-  supplier_evidence: "Supplier",
-  assumption: "Assumption",
-};
-
 export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
   return (
     <section className="enter-up space-y-5">
@@ -66,9 +58,11 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
             {qc.references.map((source) => (
               <article key={source.id} className="border-t border-zinc-100 pt-4 first:border-t-0 first:pt-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={source.evidence_type === "exact_evidence" ? "green" : source.evidence_type === "assumption" ? "red" : "amber"}>
-                    {evidenceLabels[source.evidence_type]}
-                  </Badge>
+                  {sourceContextBadges(source).map((badge) => (
+                    <Badge key={`${source.id}-${badge.label}`} tone={badge.tone}>
+                      {badge.label}
+                    </Badge>
+                  ))}
                   <ConfidenceBadge value={source.confidence} />
                 </div>
                 <h3 className="mt-2 text-sm font-semibold leading-5 text-zinc-950">{source.title}</h3>
@@ -106,6 +100,23 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
   );
 }
 
+function sourceContextBadges(source: EvidenceSource): Array<{ label: string; tone: "green" | "amber" | "red" | "blue" }> {
+  const badges: Array<{ label: string; tone: "green" | "amber" | "red" | "blue" }> = [];
+  if (source.trust_tier === "supplier_documentation" || source.trust_tier === "literature_database" || source.evidence_type === "exact_evidence") {
+    badges.push({ label: "Source-backed", tone: "green" });
+  }
+  if (source.evidence_type === "adjacent_evidence") {
+    badges.push({ label: "Adjacent evidence", tone: "amber" });
+  }
+  if (source.trust_tier === "community_protocol") {
+    badges.push({ label: "Community source", tone: "blue" });
+  }
+  if (source.trust_tier === "inferred") {
+    badges.push({ label: "Inferred / expert review required", tone: "red" });
+  }
+  return badges;
+}
+
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
@@ -114,4 +125,3 @@ function Field({ label, value }: { label: string; value: string | null }) {
     </div>
   );
 }
-

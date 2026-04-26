@@ -1,9 +1,28 @@
+export type DomainRoute =
+  | "cell_biology"
+  | "diagnostics_biosensor"
+  | "animal_gut_health"
+  | "microbial_electrochemistry";
+
 export type EvidenceType =
   | "exact_evidence"
   | "adjacent_evidence"
   | "generic_protocol_evidence"
   | "supplier_evidence"
   | "assumption";
+
+export type TrustTier =
+  | "literature_database"
+  | "supplier_documentation"
+  | "community_protocol"
+  | "inferred";
+
+export type ProcurementStatus = "verified" | "requires_procurement_check";
+
+export type PriceStatus =
+  | "visible_price"
+  | "requires_procurement_check"
+  | "contact_supplier";
 
 export type NoveltySignal =
   | "exact_match_found"
@@ -21,6 +40,7 @@ export interface Preset {
 export interface ParsedHypothesis {
   original_text: string;
   domain: string;
+  domain_route: DomainRoute;
   organism_or_system: string | null;
   intervention: string | null;
   comparator: string | null;
@@ -37,6 +57,7 @@ export interface EvidenceSource {
   title: string;
   url: string | null;
   evidence_type: EvidenceType;
+  trust_tier: TrustTier;
   snippet: string;
   authors: string[];
   year: number | null;
@@ -76,6 +97,8 @@ export interface MaterialItem {
   catalog_number: string | null;
   price: string | null;
   currency: string | null;
+  procurement_status: ProcurementStatus;
+  price_status: PriceStatus;
   requires_procurement_check: boolean;
   evidence_source_ids: string[];
   notes: string;
@@ -124,4 +147,3 @@ export interface PlanResponse {
   run_id: string;
   plan: ExperimentPlan;
 }
-

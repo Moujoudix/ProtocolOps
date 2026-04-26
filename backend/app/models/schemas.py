@@ -9,12 +9,37 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class DomainRoute(StrEnum):
+    cell_biology = "cell_biology"
+    diagnostics_biosensor = "diagnostics_biosensor"
+    animal_gut_health = "animal_gut_health"
+    microbial_electrochemistry = "microbial_electrochemistry"
+
+
 class EvidenceType(StrEnum):
     exact_evidence = "exact_evidence"
     adjacent_evidence = "adjacent_evidence"
     generic_protocol_evidence = "generic_protocol_evidence"
     supplier_evidence = "supplier_evidence"
     assumption = "assumption"
+
+
+class TrustTier(StrEnum):
+    literature_database = "literature_database"
+    supplier_documentation = "supplier_documentation"
+    community_protocol = "community_protocol"
+    inferred = "inferred"
+
+
+class ProcurementStatus(StrEnum):
+    verified = "verified"
+    requires_procurement_check = "requires_procurement_check"
+
+
+class PriceStatus(StrEnum):
+    visible_price = "visible_price"
+    requires_procurement_check = "requires_procurement_check"
+    contact_supplier = "contact_supplier"
 
 
 class NoveltySignal(StrEnum):
@@ -39,6 +64,7 @@ class LiteratureQcRequest(StrictModel):
 class ParsedHypothesis(StrictModel):
     original_text: str
     domain: str
+    domain_route: DomainRoute
     organism_or_system: str | None
     intervention: str | None
     comparator: str | None
@@ -55,6 +81,7 @@ class EvidenceSource(StrictModel):
     title: str
     url: str | None
     evidence_type: EvidenceType
+    trust_tier: TrustTier
     snippet: str
     authors: list[str]
     year: int | None
@@ -70,6 +97,15 @@ class LiteratureQC(StrictModel):
     searched_sources: list[str]
     rationale: str
     evidence_gap_warnings: list[str]
+
+
+class EvidencePack(StrictModel):
+    domain_route: DomainRoute
+    sources: list[EvidenceSource]
+    searched_providers: list[str]
+    evidence_gap_warnings: list[str]
+    used_seed_data: bool
+    confidence_summary: float = Field(ge=0.0, le=1.0)
 
 
 class ExperimentPlanSection(StrictModel):
@@ -88,15 +124,26 @@ class MaterialItem(StrictModel):
     catalog_number: str | None
     price: str | None
     currency: str | None
-    requires_procurement_check: bool
+    procurement_status: ProcurementStatus = ProcurementStatus.verified
+    price_status: PriceStatus = PriceStatus.visible_price
+    requires_procurement_check: bool = False
     evidence_source_ids: list[str] = Field(min_length=1)
     notes: str
     confidence: float = Field(ge=0.0, le=1.0)
 
     @model_validator(mode="after")
     def enforce_procurement_check(self) -> "MaterialItem":
-        if self.catalog_number is None or self.price is None:
-            self.requires_procurement_check = True
+        self.procurement_status = (
+            ProcurementStatus.requires_procurement_check if self.catalog_number is None else ProcurementStatus.verified
+        )
+        if self.price is None:
+            self.price_status = PriceStatus.contact_supplier if self.vendor else PriceStatus.requires_procurement_check
+        else:
+            self.price_status = PriceStatus.visible_price
+        self.requires_procurement_check = (
+            self.procurement_status == ProcurementStatus.requires_procurement_check
+            or self.price_status != PriceStatus.visible_price
+        )
         return self
 
 
@@ -173,4 +220,3 @@ def model_from_json(model: type[BaseModel], raw: str | None) -> Any:
     if raw is None:
         return None
     return model.model_validate_json(raw)
-
