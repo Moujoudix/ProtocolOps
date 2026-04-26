@@ -219,3 +219,10 @@ Example:
   - realized outcome: `degraded_live`
   - reason: Semantic Scholar returned HTTP `429`, while Consensus, Europe PMC, and live supplier sources still succeeded
 
+## Related docs
+
+- [Docs hub](README.md)
+- [API reference](05_API_REFERENCE.md)
+- [Local setup and live mode](06_LOCAL_SETUP_AND_LIVE_MODE.md)
+- [Scientist review loop](08_SCIENTIST_REVIEW_LOOP.md)
+- [Submission notes](../SUBMISSION_NOTES.md)

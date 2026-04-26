@@ -49,6 +49,16 @@ Focus on:
 - live supplier domains in the Sources tab
 - review-ready warnings and expert-review flags
 
+## Judge flow checklist
+
+Point judges to these signals in order:
+
+1. novelty signal from Literature QC
+2. source provenance in the `Sources` tab
+3. procurement-check flags in `Materials` and `Budget`
+4. expert-review warnings showing where the plan is conservative
+5. the `Review` tab and revised-plan flow as the scientist feedback loop
+
 ## How to interpret modes
 
 ### `strict_live`
@@ -77,4 +87,3 @@ Configured mode meaning:
 ## Important note
 
 ProtocolOps generates a **review-ready experiment plan**. It does not claim to generate a final lab-approved SOP.
-

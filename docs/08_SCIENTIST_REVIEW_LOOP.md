@@ -129,3 +129,10 @@ Inaccurate wording:
 - the model has been fine-tuned
 - the system trains itself from scientist feedback
 
+## Related docs
+
+- [Docs hub](README.md)
+- [Architecture](02_ARCHITECTURE.md)
+- [API reference](05_API_REFERENCE.md)
+- [Local setup and live mode](06_LOCAL_SETUP_AND_LIVE_MODE.md)
+- [Submission notes](../SUBMISSION_NOTES.md)

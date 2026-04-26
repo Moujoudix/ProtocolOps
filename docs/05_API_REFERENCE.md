@@ -248,3 +248,10 @@ Even if a checked-in artifact is stored as `.md`, the API itself returns plain t
 - content type: `application/pdf`
 - intended as a printable summary, not a final lab SOP
 
+## Related docs
+
+- [Docs hub](README.md)
+- [Architecture](02_ARCHITECTURE.md)
+- [Local setup and live mode](06_LOCAL_SETUP_AND_LIVE_MODE.md)
+- [Scientist review loop](08_SCIENTIST_REVIEW_LOOP.md)
+- [Submission notes](../SUBMISSION_NOTES.md)

@@ -4,6 +4,8 @@ ProtocolOps is an evidence-grounded scientific planning app that turns a natural
 
 ProtocolOps does **not** generate final lab-approved SOPs. It produces an operational plan for expert review.
 
+> Verified proof run: the HeLa strict-live path is verified with run `d4f6d470-5c47-4568-9eac-019815a80bb3`. Its realized outcome is `degraded_live`, not `fully_live`, because Semantic Scholar returned HTTP `429` while Consensus, Europe PMC, and live supplier evidence still succeeded.
+
 ## Pipeline
 
 The application follows one fixed pipeline:
@@ -23,15 +25,28 @@ The application follows one fixed pipeline:
 
 ## Documentation
 
+- [Docs hub](docs/README.md)
 - [Architecture](docs/02_ARCHITECTURE.md)
 - [API reference](docs/05_API_REFERENCE.md)
 - [Local setup and live mode](docs/06_LOCAL_SETUP_AND_LIVE_MODE.md)
 - [Scientist review loop](docs/08_SCIENTIST_REVIEW_LOOP.md)
+- [Diagram browser](docs/diagrams/README.md)
+- [Video page](docs/videos.html)
 - [Security and secrets](SECURITY_AND_SECRETS.md)
 - [Evaluation checklist](EVALUATION_CHECKLIST.md)
 - [Judge quickstart](JUDGE_QUICKSTART.md)
 - [Submission notes](SUBMISSION_NOTES.md)
 - [Resource routing spec](RESOURCE_ROUTING.md)
+
+## Architecture at a glance
+
+<p align="center">
+  <img src="docs/diagrams/architecture.png" alt="ProtocolOps architecture" width="900" />
+</p>
+
+<p align="center">
+  <a href="docs/diagrams/README.md">Browse the full diagram gallery</a>
+</p>
 
 ## Videos
 
@@ -48,19 +63,49 @@ The demo video shows the HeLa cryopreservation workflow: hypothesis input, Liter
 
 The technical video explains the FastAPI + React architecture, Consensus-first Literature QC, provider routing, OpenAI structured outputs, Pydantic guardrails, and strict-live/cached-live evidence modes.
 
+## Diagram gallery
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="docs/diagrams/README.md#three-stage-workflow">
+        <img src="docs/diagrams/three_stages_workflow.png" alt="Three-stage workflow" width="420" />
+      </a>
+      <br />
+      <sub><strong>Three-stage workflow</strong></sub>
+    </td>
+    <td align="center">
+      <a href="docs/diagrams/README.md#provider-routing">
+        <img src="docs/diagrams/provider_routing.png" alt="Provider routing" width="420" />
+      </a>
+      <br />
+      <sub><strong>Provider routing</strong></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="docs/diagrams/README.md#evidence-modes">
+        <img src="docs/diagrams/evidence_modes.png" alt="Evidence modes" width="420" />
+      </a>
+      <br />
+      <sub><strong>Evidence modes</strong></sub>
+    </td>
+    <td align="center">
+      <a href="docs/diagrams/README.md#review-memory-loop">
+        <img src="docs/diagrams/review_memory_loop.png" alt="Review memory loop" width="420" />
+      </a>
+      <br />
+      <sub><strong>Review memory loop</strong></sub>
+    </td>
+  </tr>
+</table>
+
+For full-size renders and the `.puml` sources, see the [diagram browser](docs/diagrams/README.md).
+
 ## Diagrams
 
-PlantUML sources live under [docs/diagrams](docs/diagrams):
-
-- `architecture.puml`
-- `three_stage_workflow.puml`
-- `evidence_pack_sequence.puml`
-- `provider_routing.puml`
-- `evidence_trust_model.puml`
-- `evidence_modes.puml`
-- `review_memory_loop.puml`
-- `database_model.puml`
-- `api_map.puml`
+- [Diagram browser with PNG previews](docs/diagrams/README.md)
+- [PlantUML source directory](docs/diagrams)
 
 ## Quickstart
 

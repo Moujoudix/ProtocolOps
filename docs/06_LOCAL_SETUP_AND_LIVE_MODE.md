@@ -235,3 +235,10 @@ Check:
 - `CONSENSUS_MCP_ENABLED=true`
 - bridge health shows `authenticated: true`
 
+## Related docs
+
+- [Docs hub](README.md)
+- [Architecture](02_ARCHITECTURE.md)
+- [API reference](05_API_REFERENCE.md)
+- [Scientist review loop](08_SCIENTIST_REVIEW_LOOP.md)
+- [Submission notes](../SUBMISSION_NOTES.md)
