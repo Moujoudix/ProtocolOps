@@ -41,7 +41,7 @@ The application follows one fixed pipeline:
 ## Architecture at a glance
 
 <p align="center">
-  <img src="docs/diagrams/architecture.png" alt="ProtocolOps architecture" width="900" />
+  <img src="docs/diagrams/architecture.png" alt="ProtocolOps architecture" width="900" height="900"/>
 </p>
 
 <p align="center">
