@@ -11,6 +11,15 @@ The internal source flow is documented in [RESOURCE_ROUTING.md](RESOURCE_ROUTING
 5. OpenAI structured experiment-plan generation
 6. frontend rendering with sources, confidence, and review flags
 
+## Demo Videos
+
+- [Demo video: ProtocolOps user workflow](docs/videos/demo.mp4)
+- [Technical video: architecture and implementation](docs/videos/tech.mp4)
+
+The demo video shows the HeLa cryopreservation workflow: hypothesis input, Literature QC, EvidencePack-backed plan generation, materials/procurement checks, sources, and review/export actions.
+
+The technical video explains the FastAPI + React architecture, Consensus-first Literature QC, provider routing, OpenAI structured outputs, Pydantic guardrails, and strict-live/cached-live evidence modes.
+
 ## Product Features
 
 The app now includes:
