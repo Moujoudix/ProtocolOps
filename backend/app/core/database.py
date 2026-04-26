@@ -40,6 +40,7 @@ def ensure_sqlite_compatibility() -> None:
     existing_columns = {column["name"] for column in inspector.get_columns("run")}
     migrations = {
         "review_state": "ALTER TABLE run ADD COLUMN review_state VARCHAR NOT NULL DEFAULT 'generated'",
+        "evidence_mode": "ALTER TABLE run ADD COLUMN evidence_mode VARCHAR NOT NULL DEFAULT 'seeded_demo'",
         "used_seed_data": "ALTER TABLE run ADD COLUMN used_seed_data BOOLEAN NOT NULL DEFAULT 0",
         "quality_summary_json": "ALTER TABLE run ADD COLUMN quality_summary_json VARCHAR",
     }

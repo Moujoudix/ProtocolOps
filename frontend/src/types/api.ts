@@ -61,6 +61,7 @@ export type ReadinessStatus =
   | "degraded";
 
 export type RunMode = "fully_live" | "degraded_live" | "demo_fallback";
+export type EvidenceMode = "strict_live" | "cached_live" | "seeded_demo";
 
 export type NoveltySignal =
   | "exact_match_found"
@@ -117,6 +118,8 @@ export interface ProviderTraceEntry {
   attempted: boolean;
   succeeded: boolean;
   cached: boolean;
+  stage: string;
+  fallback_used: boolean;
   query: string;
   result_count: number;
   error: string | null;
@@ -132,7 +135,10 @@ export interface ProviderReadiness {
 
 export interface ReadinessResponse {
   strict_live_mode: boolean;
+  evidence_mode: EvidenceMode;
   live_ready: boolean;
+  cached_live_available: boolean;
+  seeded_demo_available: boolean;
   providers: ProviderReadiness[];
 }
 
@@ -270,6 +276,7 @@ export interface RunListItem {
   status: string;
   review_state: ReviewState;
   run_mode: RunMode;
+  evidence_mode: EvidenceMode;
   created_at: string;
   updated_at: string;
   domain: string | null;
@@ -288,6 +295,7 @@ export interface RunStateResponse {
   status: string;
   review_state: ReviewState;
   run_mode: RunMode;
+  evidence_mode: EvidenceMode;
   used_seed_data: boolean;
   is_presentation_anchor: boolean;
   parent_run_id: string | null;

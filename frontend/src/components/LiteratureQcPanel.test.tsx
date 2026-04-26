@@ -52,6 +52,8 @@ const qc = {
       attempted: true,
       succeeded: false,
       cached: false,
+      stage: "literature_qc",
+      fallback_used: false,
       query: "trehalose HeLa cryopreservation viability DMSO",
       result_count: 0,
       error: "Consensus MCP bridge not configured",

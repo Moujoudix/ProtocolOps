@@ -5,6 +5,7 @@ import { exportCitationsUrl, exportJsonUrl, exportPdfUrl, exportProcurementUrl, 
 import type {
   BudgetSummary,
   ComparisonMetricRecord,
+  EvidenceMode,
   EvidenceSource,
   ExperimentPlan,
   ExperimentPlanSection,
@@ -27,6 +28,7 @@ interface PlanTabsProps {
   runId?: string | null;
   reviewState?: ReviewState;
   runMode?: RunMode;
+  evidenceMode?: EvidenceMode;
   usedSeedData?: boolean;
   isPresentationAnchor?: boolean;
   parentRunId?: string | null;
@@ -65,6 +67,7 @@ export function PlanTabs({
   runId = null,
   reviewState = "generated",
   runMode = "degraded_live",
+  evidenceMode = "seeded_demo",
   usedSeedData = false,
   isPresentationAnchor = false,
   parentRunId = null,
@@ -102,6 +105,11 @@ export function PlanTabs({
 
   const sourceById = useMemo(() => new Map(plan.sources.map((source) => [source.id, source])), [plan.sources]);
   const sourceUsage = useMemo(() => buildSourceUsage(plan), [plan]);
+  const sourceStage = useMemo(() => buildSourceStageLookup(plan), [plan]);
+  const noveltyLabel = humanizeNoveltySignal(plan.literature_qc.novelty_signal);
+  const sourceCount = plan.sources.length;
+  const procurementCheckCount = countProcurementChecks(plan);
+  const expertReviewFlagCount = countExpertReviewFlags(plan);
 
   const providerOptions = useMemo(
     () => ["all", ...Array.from(new Set(plan.sources.map((source) => source.source_name)))],
@@ -229,6 +237,7 @@ export function PlanTabs({
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge tone="amber">{humanizeReviewState(localReviewState)}</Badge>
               <Badge tone={runModeTone(runMode)}>{humanizeRunMode(runMode)}</Badge>
+              <Badge tone={evidenceModeTone(evidenceMode)}>{humanizeEvidenceMode(evidenceMode)}</Badge>
               {usedSeedData && <Badge tone="amber">Seeded evidence used</Badge>}
               {isPresentationAnchor && <Badge tone="blue">Presentation anchor</Badge>}
               {revisionNumber > 0 && <Badge>Revision {revisionNumber}</Badge>}
@@ -277,6 +286,14 @@ export function PlanTabs({
             <MetricCard label="Evidence completeness" value={plan.quality_summary.evidence_completeness} />
           </div>
         )}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <SummaryCard label="Novelty signal" value={noveltyLabel} />
+          <SummaryCard label="Evidence mode" value={humanizeEvidenceMode(evidenceMode)} />
+          <SummaryCard label="Sources" value={`${sourceCount}`} />
+          <SummaryCard label="Expert-review flags" value={`${expertReviewFlagCount}`} />
+          <SummaryCard label="Procurement checks" value={`${procurementCheckCount}`} />
+        </div>
 
         {(plan.memory_applied.length > 0 || runEvents.length > 0) && (
           <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
@@ -368,6 +385,7 @@ export function PlanTabs({
           <SourcesView
             sources={filteredSources}
             sourceUsage={sourceUsage}
+            sourceStage={sourceStage}
             selectedSourceId={selectedSourceId}
             providerFilter={providerFilter}
             trustFilter={trustFilter}
@@ -452,6 +470,15 @@ function MetricCard({ label, value }: { label: string; value: number }) {
       <div className="mt-2 flex items-center gap-2">
         <ConfidenceBadge value={value} />
       </div>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-zinc-900">{value}</p>
     </div>
   );
 }
@@ -648,6 +675,7 @@ function BudgetView({
 function SourcesView({
   sources,
   sourceUsage,
+  sourceStage,
   selectedSourceId,
   providerFilter,
   trustFilter,
@@ -660,6 +688,7 @@ function SourcesView({
 }: {
   sources: EvidenceSource[];
   sourceUsage: Map<string, string[]>;
+  sourceStage: Map<string, string>;
   selectedSourceId: string | null;
   providerFilter: string;
   trustFilter: string;
@@ -714,9 +743,11 @@ function SourcesView({
               <MetaField label="Trust level" value={humanizeTrustLevel(source.trust_level)} />
               <MetaField label="Provenance" value={humanizeTrustTier(source.trust_tier)} />
               <MetaField label="Evidence class" value={humanizeEvidenceClass(source)} />
+              <MetaField label="Stage used in" value={sourceStage.get(source.id) ?? "Evidence Pack"} />
               <MetaField label="Used in sections" value={(sourceUsage.get(source.id) ?? ["Not referenced"]).join(", ")} />
               <MetaField label="Confidence" value={`${Math.round(source.confidence * 100)}%`} />
               <MetaField label="URL" value={source.url ?? "Not available"} />
+              <MetaField label="Limitations" value={sourceLimitations(source)} />
             </dl>
             {source.url && (
               <a className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700" href={source.url} target="_blank" rel="noreferrer">
@@ -1033,6 +1064,22 @@ function buildSourceUsage(plan: ExperimentPlan): Map<string, string[]> {
   return new Map(Array.from(usage.entries()).map(([sourceId, labels]) => [sourceId, Array.from(labels)]));
 }
 
+function buildSourceStageLookup(plan: ExperimentPlan): Map<string, string> {
+  const lookup = new Map<string, string>();
+
+  plan.literature_qc.literature_sources.forEach((source) => {
+    lookup.set(source.id, "Literature QC");
+  });
+
+  plan.sources.forEach((source) => {
+    if (!lookup.has(source.id)) {
+      lookup.set(source.id, "Evidence Pack");
+    }
+  });
+
+  return lookup;
+}
+
 function humanizeTrustTier(trustTier: EvidenceSource["trust_tier"]) {
   const labels: Record<EvidenceSource["trust_tier"], string> = {
     literature_database: "Literature database",
@@ -1079,6 +1126,25 @@ function humanizeEvidenceClass(source: EvidenceSource) {
   return "Source-backed";
 }
 
+function sourceLimitations(source: EvidenceSource) {
+  if (source.trust_tier === "inferred" || source.evidence_type === "assumption") {
+    return "Inferred detail that still needs expert review.";
+  }
+  if (source.trust_tier === "community_protocol") {
+    return "Useful scaffold, but not a high-trust operational authority.";
+  }
+  if (source.evidence_type === "adjacent_method" || source.evidence_type === "close_match") {
+    return "Supports an adjacent method, not an exact matched experiment.";
+  }
+  if (source.evidence_type === "supplier_reference") {
+    return "Supports materials and supplier documentation, not outcome validity by itself.";
+  }
+  if (source.evidence_type === "safety_or_standard") {
+    return "Checklist and safety guidance, not direct protocol-parameter evidence.";
+  }
+  return "Source-backed evidence with remaining domain-specific review as needed.";
+}
+
 function humanizeReviewState(reviewState: ReviewState) {
   const labels: Record<ReviewState, string> = {
     generated: "Generated",
@@ -1098,6 +1164,15 @@ function humanizeRunMode(runMode: RunMode) {
   return labels[runMode];
 }
 
+function humanizeEvidenceMode(evidenceMode: EvidenceMode) {
+  const labels: Record<EvidenceMode, string> = {
+    strict_live: "Strict live",
+    cached_live: "Cached live evidence",
+    seeded_demo: "Seeded demo evidence",
+  };
+  return labels[evidenceMode];
+}
+
 function runModeTone(runMode: RunMode): "green" | "amber" | "red" | "blue" {
   if (runMode === "fully_live") {
     return "green";
@@ -1106,6 +1181,16 @@ function runModeTone(runMode: RunMode): "green" | "amber" | "red" | "blue" {
     return "amber";
   }
   return "blue";
+}
+
+function evidenceModeTone(evidenceMode: EvidenceMode): "green" | "amber" | "red" | "blue" {
+  if (evidenceMode === "strict_live") {
+    return "green";
+  }
+  if (evidenceMode === "cached_live") {
+    return "blue";
+  }
+  return "amber";
 }
 
 function trustTierTone(trustTier: EvidenceSource["trust_tier"]): "green" | "amber" | "red" | "blue" {
@@ -1151,6 +1236,50 @@ function humanizePriceStatus(status: MaterialItem["price_status"]) {
     contact_supplier: "contact supplier",
   };
   return labels[status];
+}
+
+function humanizeNoveltySignal(signal: ExperimentPlan["literature_qc"]["novelty_signal"]) {
+  const labels: Record<ExperimentPlan["literature_qc"]["novelty_signal"], string> = {
+    exact_match_found: "Exact match found",
+    similar_work_exists: "Similar work exists",
+    not_found_in_searched_sources: "Not found in searched sources",
+  };
+  return labels[signal];
+}
+
+function countProcurementChecks(plan: ExperimentPlan) {
+  const names = new Set<string>();
+  [...plan.materials, ...plan.budget.items].forEach((item) => {
+    if (item.requires_procurement_check) {
+      names.add(`${item.name}:${item.role}`);
+    }
+  });
+  return names.size;
+}
+
+function countExpertReviewFlags(plan: ExperimentPlan) {
+  let count = 0;
+  const sections = [
+    plan.overview,
+    plan.study_design,
+    plan.timeline,
+    plan.validation,
+    plan.risks,
+    {
+      expert_review_required: plan.budget.expert_review_required,
+    },
+  ];
+  sections.forEach((section) => {
+    if (section.expert_review_required) {
+      count += 1;
+    }
+  });
+  plan.protocol.forEach((step) => {
+    if (step.expert_review_required) {
+      count += 1;
+    }
+  });
+  return count;
 }
 
 function FilterSelect({

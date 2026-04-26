@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlmodel import Session, select
 
 from app.models.db import PresentationAnchor, Run, RunRevision
-from app.models.schemas import DomainRoute, ExperimentPlan, LiteratureQC, RunMode, model_from_json
+from app.models.schemas import DomainRoute, EvidenceMode, EvidencePack, ExperimentPlan, LiteratureQC, RunMode, model_from_json
 
 
 def resolve_run_mode(run: Run) -> RunMode:
@@ -21,6 +21,30 @@ def resolve_run_mode(run: Run) -> RunMode:
     if primary_literature_success and _route_specific_live_requirements_met(plan, successful_providers, consensus_attempted):
         return RunMode.fully_live
     return RunMode.degraded_live
+
+
+def infer_evidence_mode(
+    literature_qc: LiteratureQC | None,
+    evidence_pack: EvidencePack | None = None,
+) -> EvidenceMode:
+    trace = []
+    if evidence_pack is not None and evidence_pack.provider_trace:
+        trace = evidence_pack.provider_trace
+    elif literature_qc is not None:
+        trace = literature_qc.provider_trace
+
+    if any(entry.cached for entry in trace):
+        return EvidenceMode.cached_live
+
+    source_ids: list[str] = []
+    if literature_qc is not None:
+        source_ids.extend(source.id for source in literature_qc.literature_sources)
+    if evidence_pack is not None:
+        source_ids.extend(source.id for source in evidence_pack.sources)
+
+    if any(source_id.startswith("seed-") for source_id in source_ids):
+        return EvidenceMode.seeded_demo
+    return EvidenceMode.strict_live
 
 
 def _route_specific_live_requirements_met(

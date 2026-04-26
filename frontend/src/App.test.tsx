@@ -41,7 +41,10 @@ afterEach(() => {
 
 const readiness = {
   strict_live_mode: false,
+  evidence_mode: "seeded_demo" as const,
   live_ready: false,
+  cached_live_available: false,
+  seeded_demo_available: true,
   providers: [
     {
       provider: "OpenAI",
@@ -65,10 +68,11 @@ const recentRuns: Array<{
   plan_title: string | null;
   quality_summary: null;
   used_seed_data: boolean;
+  evidence_mode: "seeded_demo";
 }> = [];
 
 describe("App", () => {
-  it("loads all four presets and gates plan generation before Literature QC", async () => {
+  it("loads all four example hypotheses and gates plan generation before Literature QC", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((url: string) => {
@@ -89,6 +93,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Main demo / HeLa cryopreservation")).toBeInTheDocument();
     expect(screen.getByText("Diagnostics / CRP biosensor")).toBeInTheDocument();
+    expect(screen.getByText("Example hypotheses")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /generate plan/i })).toBeDisabled();
     expect(screen.getByText("Provider readiness")).toBeInTheDocument();
   });
@@ -135,7 +140,19 @@ describe("App", () => {
               references: [],
               literature_sources: [],
               searched_sources: ["Semantic Scholar", "Europe PMC"],
-              provider_trace: [],
+              provider_trace: [
+                {
+                  provider: "Consensus",
+                  attempted: true,
+                  succeeded: false,
+                  cached: false,
+                  stage: "literature_qc",
+                  fallback_used: false,
+                  query: "trehalose HeLa cryopreservation viability DMSO",
+                  result_count: 0,
+                  error: "Consensus bridge unavailable",
+                },
+              ],
               rationale: "Similar work exists.",
               literature_synthesis: null,
               gaps: ["Use not found in searched sources language."],

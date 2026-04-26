@@ -141,6 +141,9 @@ def test_readiness_endpoint_reports_provider_statuses():
     assert response.status_code == 200
     payload = response.json()
     assert payload["live_ready"] is False
+    assert payload["evidence_mode"] == "seeded_demo"
+    assert payload["cached_live_available"] is False
+    assert payload["seeded_demo_available"] is True
     provider_names = {provider["provider"] for provider in payload["providers"]}
     assert {"OpenAI", "Consensus", "Tavily", "protocols.io", "Semantic Scholar"} <= provider_names
     semantic_scholar = next(provider for provider in payload["providers"] if provider["provider"] == "Semantic Scholar")
@@ -213,7 +216,8 @@ async def test_runs_reviews_events_and_exports_round_trip():
 
     runs_response = client.get("/api/runs")
     assert runs_response.status_code == 200
-    assert any(item["run_id"] == run_id for item in runs_response.json())
+    matching_run = next(item for item in runs_response.json() if item["run_id"] == run_id)
+    assert matching_run["evidence_mode"] == "seeded_demo"
 
     events_response = client.get(f"/api/runs/{run_id}/events")
     assert events_response.status_code == 200
@@ -248,6 +252,7 @@ async def test_runs_reviews_events_and_exports_round_trip():
     assert revised_payload["review_state"] == "revised"
     assert revised_payload["parent_run_id"] == run_id
     assert revised_payload["revision_number"] == 1
+    assert revised_payload["evidence_mode"] == "seeded_demo"
     trehalose_material = next(item for item in revised_payload["plan"]["materials"] if item["name"] == "Trehalose")
     assert "procurement open" in trehalose_material["notes"].lower()
 

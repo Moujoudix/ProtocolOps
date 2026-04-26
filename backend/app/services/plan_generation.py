@@ -20,8 +20,10 @@ class PlanGenerationService:
         parsed: ParsedHypothesis,
         literature_qc: LiteratureQC,
         preset_id: str | None,
+        *,
+        session: Session | None = None,
     ) -> EvidencePack:
-        return await self.evidence_packs.build(parsed, literature_qc, preset_id)
+        return await self.evidence_packs.build(parsed, literature_qc, preset_id, session=session)
 
     async def run(
         self,
@@ -41,7 +43,7 @@ class PlanGenerationService:
         *,
         session: Session | None = None,
     ) -> tuple[ExperimentPlan, EvidencePack, list[ReviewMemoryReference]]:
-        evidence_pack = await self.build_evidence_pack(parsed, literature_qc, preset_id)
+        evidence_pack = await self.build_evidence_pack(parsed, literature_qc, preset_id, session=session)
         review_memory = self.review_memory.list_for_generation(session, parsed, preset_id)
         plan = await self.openai.generate_plan(
             parsed,

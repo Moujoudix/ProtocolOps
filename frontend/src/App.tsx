@@ -29,6 +29,7 @@ import {
   runLiteratureQc,
 } from "./lib/api";
 import type {
+  EvidenceMode,
   LiteratureQcResponse,
   PlanResponse,
   Preset,
@@ -59,6 +60,7 @@ export default function App() {
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [reviewState, setReviewState] = useState<ReviewState>("generated");
   const [runMode, setRunMode] = useState<RunMode>("degraded_live");
+  const [evidenceMode, setEvidenceMode] = useState<EvidenceMode>("seeded_demo");
   const [usedSeedData, setUsedSeedData] = useState(false);
   const [isPresentationAnchor, setIsPresentationAnchor] = useState(false);
   const [parentRunId, setParentRunId] = useState<string | null>(null);
@@ -131,6 +133,7 @@ export default function App() {
     setCurrentRunId(run.run_id);
     setReviewState(run.review_state);
     setRunMode(run.run_mode);
+    setEvidenceMode(run.evidence_mode);
     setUsedSeedData(run.used_seed_data);
     setIsPresentationAnchor(run.is_presentation_anchor);
     setParentRunId(run.parent_run_id);
@@ -188,6 +191,7 @@ export default function App() {
     setReviews([]);
     setReviewState("generated");
     setRunMode("degraded_live");
+    setEvidenceMode(readiness?.evidence_mode ?? "seeded_demo");
     setUsedSeedData(false);
     setIsPresentationAnchor(false);
     setParentRunId(null);
@@ -219,6 +223,7 @@ export default function App() {
       setReviews([]);
       setReviewState("generated");
       setRunMode("degraded_live");
+      setEvidenceMode(readiness?.evidence_mode ?? "seeded_demo");
       setUsedSeedData(false);
       setIsPresentationAnchor(false);
       setParentRunId(null);
@@ -345,6 +350,11 @@ export default function App() {
             >
               {readiness?.live_ready ? "Live providers ready" : "Degraded or demo mode"}
             </span>
+            {readiness && (
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1">
+                Evidence mode: {humanizeEvidenceMode(readiness.evidence_mode)}
+              </span>
+            )}
             {isPresentationAnchor && (
               <span className="rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-cyan-800">Presentation anchor</span>
             )}
@@ -360,7 +370,7 @@ export default function App() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold">Hypothesis</h2>
-                <p className="mt-1 text-sm leading-6 text-zinc-500">Select a preset or edit the input directly.</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-500">Try a challenge example or edit the hypothesis directly.</p>
               </div>
               {selectedPreset?.optimized_demo && (
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
@@ -370,7 +380,7 @@ export default function App() {
             </div>
 
             <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor="preset">
-              Preset
+              Example hypotheses
             </label>
             <select
               id="preset"
@@ -433,10 +443,25 @@ export default function App() {
               ))}
             </div>
             {readiness && (
-              <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
-                {readiness.strict_live_mode
-                  ? "Strict live mode is on. Seeded fallbacks will fail the run."
-                  : "Strict live mode is off. The app can still fall back for demo reliability."}
+              <div className="mt-4 space-y-3">
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
+                  {readiness.strict_live_mode
+                    ? "Strict live mode is on. Seeded fallbacks will fail the run."
+                    : "Strict live mode is off. The app can still fall back for demo reliability."}
+                </div>
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
+                  <p>
+                    Evidence mode: <span className="font-semibold text-zinc-900">{humanizeEvidenceMode(readiness.evidence_mode)}</span>
+                  </p>
+                  <p className="mt-1">
+                    Cached live available:{" "}
+                    <span className="font-semibold text-zinc-900">{readiness.cached_live_available ? "Yes" : "No"}</span>
+                  </p>
+                  <p className="mt-1">
+                    Seeded demo available:{" "}
+                    <span className="font-semibold text-zinc-900">{readiness.seeded_demo_available ? "Yes" : "No"}</span>
+                  </p>
+                </div>
               </div>
             )}
           </section>
@@ -473,6 +498,9 @@ export default function App() {
                         }`}
                       >
                         {humanizeRunMode(run.run_mode)}
+                      </span>
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-700">
+                        {humanizeEvidenceMode(run.evidence_mode)}
                       </span>
                       {run.is_presentation_anchor && (
                         <span className="rounded-full border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs text-cyan-800">anchor</span>
@@ -578,6 +606,7 @@ export default function App() {
               runId={currentRunId}
               reviewState={reviewState}
               runMode={runMode}
+              evidenceMode={evidenceMode}
               usedSeedData={usedSeedData}
               isPresentationAnchor={isPresentationAnchor}
               parentRunId={parentRunId}
@@ -652,6 +681,15 @@ function humanizeRunMode(runMode: RunMode) {
     demo_fallback: "demo fallback",
   };
   return labels[runMode];
+}
+
+function humanizeEvidenceMode(evidenceMode: EvidenceMode) {
+  const labels: Record<EvidenceMode, string> = {
+    strict_live: "strict live",
+    cached_live: "cached live",
+    seeded_demo: "seeded demo",
+  };
+  return labels[evidenceMode];
 }
 
 function loadingLabel(loading: Exclude<BusyState, null>) {

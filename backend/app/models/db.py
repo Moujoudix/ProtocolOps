@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from sqlmodel import Field, SQLModel
 
-from app.models.schemas import ReviewState
+from app.models.schemas import EvidenceMode, ReviewState
 
 
 def utc_now() -> datetime:
@@ -15,6 +15,7 @@ class Run(SQLModel, table=True):
     preset_id: str | None = None
     status: str = "created"
     review_state: ReviewState = ReviewState.generated
+    evidence_mode: EvidenceMode = EvidenceMode.seeded_demo
     used_seed_data: bool = False
     parsed_hypothesis_json: str | None = None
     literature_qc_json: str | None = None
@@ -29,6 +30,16 @@ class ConsensusCache(SQLModel, table=True):
     query: str
     references_json: str
     literature_synthesis: str | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
+class EvidenceReplayCache(SQLModel, table=True):
+    normalized_hypothesis: str = Field(primary_key=True)
+    preset_id: str | None = None
+    literature_qc_json: str
+    evidence_pack_json: str
+    source_run_id: str | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

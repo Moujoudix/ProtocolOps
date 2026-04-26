@@ -6,11 +6,12 @@ from sqlmodel import Session
 
 from app.core.config import Settings
 from app.models.db import ConsensusCache, utc_now
-from app.models.schemas import DomainRoute, EvidenceSource, EvidenceType, LiteratureQC, NoveltySignal, ProviderTraceEntry, TrustTier
+from app.models.schemas import DomainRoute, EvidenceMode, EvidenceSource, EvidenceType, LiteratureQC, NoveltySignal, ProviderTraceEntry, TrustTier
 from app.providers.base import ProviderSearchResult, SearchContext
 from app.providers.utils import normalize_hypothesis_key
-from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_sources
+from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_literature_qc, seeded_hela_sources
 from app.services.consensus_adapter import ConsensusMcpAdapter
+from app.services.replay_cache import EvidenceReplayCacheService
 from app.services.source_router import SourceRouter
 
 
@@ -19,12 +20,39 @@ class LiteratureQcService:
         self.settings = settings
         self.router = SourceRouter(settings)
         self.consensus = ConsensusMcpAdapter(settings)
+        self.replay_cache = EvidenceReplayCacheService()
 
     async def run(self, context: SearchContext, session: Session | None = None) -> LiteratureQC:
         query = build_literature_query(context, self.router)
 
         if self.settings.app_env == "test":
             return build_test_qc(context, query, self.settings.consensus_mcp_enabled)
+
+        if self.settings.effective_evidence_mode == EvidenceMode.cached_live:
+            cached = self.replay_cache.load_literature_qc(session, context.parsed_hypothesis.original_text)
+            if cached is None:
+                raise RuntimeError("No cached live evidence is available for this hypothesis yet.")
+            return cached
+
+        if (
+            self.settings.effective_evidence_mode == EvidenceMode.seeded_demo
+            and is_hela_trehalose_hypothesis(context.parsed_hypothesis.original_text, context.preset_id)
+        ):
+            seeded = seeded_hela_literature_qc()
+            seeded.provider_trace = [
+                ProviderTraceEntry(
+                    provider="HeLa demo seed",
+                    attempted=True,
+                    succeeded=True,
+                    cached=False,
+                    stage="literature_qc",
+                    fallback_used=True,
+                    query=query,
+                    result_count=len(seeded.literature_sources),
+                )
+            ]
+            seeded.searched_sources = dedupe_strings([*seeded.searched_sources, "HeLa demo seed"])
+            return seeded
 
         provider_trace: list[ProviderTraceEntry] = []
         sources: list[EvidenceSource] = []
@@ -121,12 +149,14 @@ class LiteratureQcService:
                     ProviderTraceEntry(
                         provider="Consensus",
                         attempted=True,
-                        succeeded=True,
-                        cached=True,
-                        query=query,
-                        result_count=len(sources),
-                    ),
-                )
+                    succeeded=True,
+                    cached=True,
+                    stage="literature_qc",
+                    fallback_used=False,
+                    query=query,
+                    result_count=len(sources),
+                ),
+            )
 
         try:
             result = await self.consensus.search(query, context)
@@ -139,6 +169,8 @@ class LiteratureQcService:
                     attempted=True,
                     succeeded=False,
                     cached=False,
+                    stage="literature_qc",
+                    fallback_used=False,
                     query=query,
                     result_count=0,
                     error=str(exc),
@@ -165,6 +197,8 @@ class LiteratureQcService:
                 attempted=True,
                 succeeded=True,
                 cached=False,
+                stage="literature_qc",
+                fallback_used=False,
                 query=query,
                 result_count=len(result.sources),
             ),
@@ -185,6 +219,8 @@ class LiteratureQcService:
                     attempted=True,
                     succeeded=True,
                     cached=False,
+                    stage="literature_qc",
+                    fallback_used=False,
                     query=query,
                     result_count=len(result.sources),
                 ),
@@ -197,6 +233,8 @@ class LiteratureQcService:
                     attempted=True,
                     succeeded=False,
                     cached=False,
+                    stage="literature_qc",
+                    fallback_used=False,
                     query=query,
                     result_count=0,
                     error=str(exc),
@@ -277,6 +315,8 @@ def build_test_qc(context: SearchContext, query: str, consensus_enabled: bool) -
                 attempted=True,
                 succeeded=False,
                 cached=False,
+                stage="literature_qc",
+                fallback_used=False,
                 query=query,
                 result_count=0,
                 error="Consensus MCP bridge not configured in test mode",

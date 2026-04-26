@@ -84,6 +84,8 @@ const plan = {
         attempted: true,
         succeeded: false,
         cached: false,
+        stage: "literature_qc",
+        fallback_used: false,
         query: "trehalose HeLa cryopreservation viability DMSO",
         result_count: 0,
         error: "Consensus bridge unavailable",
@@ -260,7 +262,7 @@ const plan = {
 
 describe("PlanTabs", () => {
   it("shows source and procurement labels", async () => {
-    render(<PlanTabs plan={plan} parsedHypothesis={parsedHypothesis} />);
+    render(<PlanTabs plan={plan} parsedHypothesis={parsedHypothesis} evidenceMode="seeded_demo" />);
 
     await userEvent.click(screen.getByRole("button", { name: "Materials" }));
 
@@ -269,7 +271,7 @@ describe("PlanTabs", () => {
   });
 
   it("renders the Sources tab with trust tier, evidence class, and usage", async () => {
-    render(<PlanTabs plan={plan} parsedHypothesis={parsedHypothesis} />);
+    render(<PlanTabs plan={plan} parsedHypothesis={parsedHypothesis} evidenceMode="seeded_demo" />);
 
     await userEvent.click(screen.getByRole("button", { name: "Sources" }));
 
@@ -280,6 +282,8 @@ describe("PlanTabs", () => {
     expect(screen.getAllByText("High trust").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Supplier documentation").length).toBeGreaterThan(0);
     expect(screen.getAllByText("ATCC").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Evidence Pack").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Supports materials and supplier documentation/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/ATCC HeLa cell stock/)).toBeInTheDocument();
     expect(screen.getAllByText(/Protocol step 1/).length).toBeGreaterThan(0);
   });
@@ -291,6 +295,7 @@ describe("PlanTabs", () => {
         parsedHypothesis={parsedHypothesis}
         runId="run-1"
         reviewState="reviewed"
+        evidenceMode="cached_live"
         runEvents={[
           {
             id: "evt-1",
@@ -306,5 +311,6 @@ describe("PlanTabs", () => {
 
     expect(screen.getByText(/prior reviewed signals applied/i)).toBeInTheDocument();
     expect(screen.getByText("Run timeline")).toBeInTheDocument();
+    expect(screen.getAllByText("Cached live evidence").length).toBeGreaterThan(0);
   });
 });

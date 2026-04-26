@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import httpx
+from sqlmodel import Session, select
 
 from app.core.config import Settings
+from app.models.db import EvidenceReplayCache
 from app.models.schemas import ProviderReadiness, ReadinessResponse, ReadinessStatus
 
 
@@ -10,7 +12,7 @@ class ReadinessService:
     def __init__(self, settings: Settings):
         self.settings = settings
 
-    async def build(self) -> ReadinessResponse:
+    async def build(self, session: Session | None = None) -> ReadinessResponse:
         providers = [
             ProviderReadiness(
                 provider="OpenAI",
@@ -51,9 +53,17 @@ class ReadinessService:
 
         return ReadinessResponse(
             strict_live_mode=self.settings.strict_live_mode,
+            evidence_mode=self.settings.effective_evidence_mode,
             live_ready=live_ready,
+            cached_live_available=self._cached_live_available(session),
+            seeded_demo_available=True,
             providers=providers,
         )
+
+    def _cached_live_available(self, session: Session | None) -> bool:
+        if session is None:
+            return False
+        return session.exec(select(EvidenceReplayCache.normalized_hypothesis)).first() is not None
 
     async def _consensus_readiness(self) -> ProviderReadiness:
         if not self.settings.consensus_mcp_enabled:

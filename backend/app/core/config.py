@@ -3,6 +3,8 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.models.schemas import EvidenceMode
+
 
 class Settings(BaseSettings):
     app_env: str = "development"
@@ -26,6 +28,7 @@ class Settings(BaseSettings):
     consensus_bridge_home: str | None = None
     run_live_integration: bool = False
     strict_live_mode: bool = False
+    evidence_mode: EvidenceMode = EvidenceMode.seeded_demo
 
     request_timeout_seconds: float = Field(default=12.0, ge=1.0)
 
@@ -43,6 +46,12 @@ class Settings(BaseSettings):
             if origin:
                 origins.append(origin)
         return origins
+
+    @property
+    def effective_evidence_mode(self) -> EvidenceMode:
+        if self.strict_live_mode:
+            return EvidenceMode.strict_live
+        return self.evidence_mode
 
 
 @lru_cache

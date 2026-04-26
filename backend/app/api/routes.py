@@ -37,10 +37,12 @@ from app.services.plan_generation import PlanGenerationService
 from app.services.comparison import compare_plans
 from app.services.pdf_export import build_plan_pdf
 from app.services.readiness import ReadinessService
+from app.services.replay_cache import EvidenceReplayCacheService
 from app.services.reviews import create_review, list_reviews
 from app.services.run_metadata import (
     get_child_revisions,
     get_parent_revision,
+    infer_evidence_mode,
     is_presentation_anchor,
     next_revision_number,
     resolve_run_mode,
@@ -58,8 +60,11 @@ def list_presets() -> list[Preset]:
 
 
 @router.get("/readiness", response_model=ReadinessResponse)
-async def get_readiness(settings: Settings = Depends(get_settings)) -> ReadinessResponse:
-    return await ReadinessService(settings).build()
+async def get_readiness(
+    session: Session = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+) -> ReadinessResponse:
+    return await ReadinessService(settings).build(session=session)
 
 
 @router.get("/runs", response_model=list[RunListItem])
@@ -79,6 +84,7 @@ def list_runs(session: Session = Depends(get_session)) -> list[RunListItem]:
                 status=run.status,
                 review_state=run.review_state,
                 run_mode=resolve_run_mode(run),
+                evidence_mode=run.evidence_mode,
                 created_at=run.created_at,
                 updated_at=run.updated_at,
                 domain=parsed.domain if parsed else None,
@@ -110,6 +116,7 @@ async def create_literature_qc(
         hypothesis=request.hypothesis,
         preset_id=request.preset_id,
         status="literature_qc_complete",
+        evidence_mode=infer_evidence_mode(literature_qc),
         used_seed_data=any(source.id.startswith("seed-") for source in literature_qc.literature_sources),
         parsed_hypothesis_json=parsed.model_dump_json(),
         literature_qc_json=literature_qc.model_dump_json(),
@@ -167,6 +174,7 @@ async def create_plan(
     )
 
     run.status = "plan_complete"
+    run.evidence_mode = infer_evidence_mode(literature_qc, evidence_pack)
     run.used_seed_data = evidence_pack.used_seed_data
     run.plan_json = plan.model_dump_json()
     run.quality_summary_json = plan.quality_summary.model_dump_json() if plan.quality_summary else None
@@ -174,6 +182,15 @@ async def create_plan(
     session.add(run)
     session.commit()
     session.refresh(run)
+    if run.evidence_mode.value == "strict_live" and not evidence_pack.used_seed_data:
+        EvidenceReplayCacheService().store(
+            session,
+            hypothesis=run.hypothesis,
+            preset_id=run.preset_id,
+            literature_qc=literature_qc,
+            evidence_pack=evidence_pack,
+            source_run_id=run.id,
+        )
     record_run_event(
         session,
         run_id=run.id,
@@ -265,6 +282,7 @@ async def revise_run_plan(
         preset_id=run.preset_id,
         status="plan_revised",
         review_state=ReviewState.revised,
+        evidence_mode=infer_evidence_mode(literature_qc, evidence_pack),
         used_seed_data=evidence_pack.used_seed_data,
         parsed_hypothesis_json=run.parsed_hypothesis_json,
         literature_qc_json=run.literature_qc_json,
@@ -424,6 +442,7 @@ def build_run_state_response(session: Session, run: Run) -> RunStateResponse:
         status=run.status,
         review_state=run.review_state,
         run_mode=resolve_run_mode(run),
+        evidence_mode=run.evidence_mode,
         used_seed_data=run.used_seed_data,
         is_presentation_anchor=is_presentation_anchor(session, run.id),
         parent_run_id=parent_revision.parent_run_id if parent_revision else None,

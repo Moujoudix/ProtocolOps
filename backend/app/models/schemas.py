@@ -98,6 +98,12 @@ class RunMode(StrEnum):
     demo_fallback = "demo_fallback"
 
 
+class EvidenceMode(StrEnum):
+    strict_live = "strict_live"
+    cached_live = "cached_live"
+    seeded_demo = "seeded_demo"
+
+
 class Preset(StrictModel):
     id: str
     label: str
@@ -175,6 +181,8 @@ class ProviderTraceEntry(StrictModel):
     attempted: bool
     succeeded: bool
     cached: bool = False
+    stage: str = "literature_qc"
+    fallback_used: bool = False
     query: str
     result_count: int = Field(ge=0)
     error: str | None = None
@@ -225,7 +233,10 @@ class ProviderReadiness(StrictModel):
 
 class ReadinessResponse(StrictModel):
     strict_live_mode: bool
+    evidence_mode: EvidenceMode
     live_ready: bool
+    cached_live_available: bool = False
+    seeded_demo_available: bool = True
     providers: list[ProviderReadiness]
 
 
@@ -371,6 +382,7 @@ class RunListItem(StrictModel):
     status: str
     review_state: ReviewState
     run_mode: RunMode
+    evidence_mode: EvidenceMode
     created_at: datetime
     updated_at: datetime
     domain: str | None = None
@@ -389,6 +401,7 @@ class RunStateResponse(StrictModel):
     status: str
     review_state: ReviewState = ReviewState.generated
     run_mode: RunMode = RunMode.degraded_live
+    evidence_mode: EvidenceMode = EvidenceMode.seeded_demo
     used_seed_data: bool = False
     is_presentation_anchor: bool = False
     parent_run_id: str | None = None

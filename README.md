@@ -1,6 +1,6 @@
 # ProtocolOps
 
-AI Scientist MVP: an evidence-grounded experiment-planning web app that moves from hypothesis input to Literature QC to a review-ready experiment plan.
+AI Scientist MVP+: an evidence-grounded experiment-planning web app that moves from hypothesis input to Literature QC to a review-ready experiment plan.
 
 The internal source flow is documented in [RESOURCE_ROUTING.md](RESOURCE_ROUTING.md). The app now follows one fixed pipeline:
 
@@ -16,6 +16,7 @@ The internal source flow is documented in [RESOURCE_ROUTING.md](RESOURCE_ROUTING
 The app now includes:
 
 - provider readiness checks for OpenAI, Consensus, Tavily, protocols.io, and Semantic Scholar public mode
+- explicit evidence modes for strict live, cached live, and seeded demo runs
 - persistent run history with reopenable public runs
 - stage event timelines per run
 - structured scientist review capture
@@ -65,6 +66,7 @@ Secrets stay backend-only in `backend/.env`.
 - `BACKEND_CORS_ALLOW_ORIGINS`
 - `BACKEND_CORS_ALLOW_ORIGIN_REGEX`
 - `OPENAI_API_KEY`
+- `EVIDENCE_MODE`
 - `STRICT_LIVE_MODE`
 - `CONSENSUS_MCP_ENABLED`
 - `CONSENSUS_MCP_BRIDGE_URL`
@@ -91,6 +93,7 @@ Secrets stay backend-only in `backend/.env`.
 - `GET /api/runs/{run_id}/export/json`
 - `GET /api/runs/{run_id}/export/citations`
 - `GET /api/runs/{run_id}/export/procurement`
+- `GET /api/runs/{run_id}/export/pdf`
 
 Frontend runtime:
 
@@ -105,7 +108,7 @@ Start the backend on `http://localhost:8000` and the frontend on Vite. The front
 
 For tunnel or deploy-preview access, keep the frontend using relative `/api` routes or set `VITE_API_BASE_URL` explicitly if the frontend and backend are on different origins. On the backend, allow those origins with `BACKEND_CORS_ALLOW_ORIGINS` and optionally `BACKEND_CORS_ALLOW_ORIGIN_REGEX` for dynamic preview hosts.
 
-If provider keys are missing, the HeLa cryopreservation preset still works through deterministic seeded evidence. Other presets run through the same workflow with lower confidence and explicit evidence-gap warnings.
+If provider keys are missing, the HeLa cryopreservation example hypothesis still works through deterministic seeded evidence. Other example hypotheses run through the same workflow with lower confidence and explicit evidence-gap warnings.
 
 ## Resource Routing
 
@@ -119,7 +122,27 @@ Literature QC is sequential and traceable.
 - Europe PMC and Semantic Scholar run for every Literature QC.
 - NCBI is only used as a biomedical fallback.
 - arXiv is only used for diagnostics-biosensor and microbial-electrochemistry routes.
-- Seeded fallback evidence is only used when live providers fail to produce usable results.
+- Seeded fallback evidence is only used when live providers fail to produce usable results and strict live mode is off.
+
+## Evidence Modes
+
+The app supports three explicit evidence modes:
+
+- `strict_live`
+  - real providers only
+  - no seeded fallback
+  - best for proving the pipeline end to end
+- `cached_live`
+  - replays provider responses captured from a successful strict-live run
+  - best mode for a stable judge demo
+- `seeded_demo`
+  - deterministic fallback for no-key or provider-outage resilience
+
+The UI also reports the realized run outcome separately:
+
+- `fully_live`
+- `degraded_live`
+- `demo_fallback`
 
 Evidence Pack construction is domain-routed:
 
@@ -156,7 +179,7 @@ npm run build
 
 ## Live HeLa Smoke
 
-The first fully live path is the HeLa preset.
+The first fully live path is the HeLa example hypothesis.
 
 1. Add live secrets to `backend/.env`
 2. Start the Consensus bridge:
@@ -187,7 +210,7 @@ cd backend
 RUN_LIVE_INTEGRATION=1 ../.venv/bin/pytest tests/test_live_integration.py -q
 ```
 
-The live HeLa smoke should fail if seeded HeLa evidence appears in the final QC or plan sources.
+The live HeLa smoke should fail if seeded HeLa evidence appears in the final QC or plan sources while `STRICT_LIVE_MODE=true`.
 
 ## Review Memory
 

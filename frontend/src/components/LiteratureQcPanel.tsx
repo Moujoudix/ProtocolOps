@@ -96,7 +96,9 @@ export function LiteratureQcPanel({ parsed, qc }: LiteratureQcPanelProps) {
               <article key={`${entry.provider}-${entry.query}-${entry.cached}`} className="rounded-md border border-zinc-200 p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={entry.succeeded ? "green" : "red"}>{entry.provider}</Badge>
+                  <Badge>{(entry.stage ?? "literature_qc").replace(/_/g, " ")}</Badge>
                   {entry.cached && <Badge tone="blue">cache hit</Badge>}
+                  {entry.fallback_used && <Badge tone="amber">fallback used</Badge>}
                   <Badge>{entry.result_count} results</Badge>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-zinc-700">{entry.query}</p>

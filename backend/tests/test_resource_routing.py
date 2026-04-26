@@ -67,7 +67,7 @@ async def test_stage_1_parse_does_not_call_literature_providers(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_consensus_is_attempted_first_and_failure_does_not_stop_primary_sources(monkeypatch):
-    settings = Settings(app_env="development", consensus_mcp_enabled=True)
+    settings = Settings(app_env="development", consensus_mcp_enabled=True, evidence_mode="strict_live")
     service = LiteratureQcService(settings)
     parsed = heuristic_parse_hypothesis(
         "Replacing sucrose with trehalose as a cryoprotectant in the freezing medium will increase post-thaw viability of HeLa cells by at least 15 percentage points compared to the standard DMSO protocol.",
@@ -103,7 +103,7 @@ async def test_consensus_is_attempted_first_and_failure_does_not_stop_primary_so
 
 @pytest.mark.asyncio
 async def test_consensus_cache_suppresses_duplicate_live_calls(monkeypatch):
-    settings = Settings(app_env="development", consensus_mcp_enabled=True)
+    settings = Settings(app_env="development", consensus_mcp_enabled=True, evidence_mode="strict_live")
     service = LiteratureQcService(settings)
     parsed = heuristic_parse_hypothesis(
         "Replacing sucrose with trehalose as a cryoprotectant in the freezing medium will increase post-thaw viability of HeLa cells by at least 15 percentage points compared to the standard DMSO protocol.",
@@ -186,7 +186,7 @@ async def test_consensus_adapter_fails_fast_when_bridge_is_unauthenticated(monke
 
 @pytest.mark.asyncio
 async def test_ncbi_only_used_for_biomedical_fallback_and_arxiv_only_on_relevant_routes(monkeypatch):
-    settings = Settings(app_env="development", consensus_mcp_enabled=False)
+    settings = Settings(app_env="development", consensus_mcp_enabled=False, evidence_mode="strict_live")
     service = LiteratureQcService(settings)
     counts = {"ncbi": 0, "arxiv": 0}
 
@@ -251,7 +251,7 @@ async def test_non_hela_evidence_pack_does_not_use_hela_seeded_evidence():
 
 @pytest.mark.asyncio
 async def test_tavily_search_is_not_used_for_known_urls(monkeypatch):
-    settings = Settings(app_env="development", openai_api_key="")
+    settings = Settings(app_env="development", openai_api_key="", evidence_mode="strict_live")
     parsed = heuristic_parse_hypothesis("HeLa cryopreservation with trehalose versus DMSO.", preset_id="hela-trehalose")
     literature_qc = LiteratureQC(
         novelty_signal=NoveltySignal.similar_work_exists,

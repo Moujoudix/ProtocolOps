@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from app.core.config import Settings
-from app.models.schemas import DomainRoute, EvidencePack, EvidenceSource, EvidenceType, LiteratureQC, ParsedHypothesis, ProviderTraceEntry, TrustLevel, TrustTier, now_utc
+from sqlmodel import Session
+
+from app.models.schemas import DomainRoute, EvidenceMode, EvidencePack, EvidenceSource, EvidenceType, LiteratureQC, ParsedHypothesis, ProviderTraceEntry, TrustLevel, TrustTier, now_utc
 from app.providers.base import SearchContext
 from app.providers.protocols import TavilyClient
 from app.providers.utils import stable_source_id
 from app.seeds.hela import is_hela_trehalose_hypothesis, seeded_hela_sources
 from app.seeds.standards import anaerobic_safety_source, arrive_source, bmbl_source, miqe_source, stard_source
+from app.services.replay_cache import EvidenceReplayCacheService
 from app.services.source_router import KNOWN_HELA_URLS, SUPPLIER_DOMAINS, SourceRouter
 
 
@@ -15,13 +18,21 @@ class EvidencePackService:
         self.settings = settings
         self.router = SourceRouter(settings)
         self.tavily = TavilyClient(settings)
+        self.replay_cache = EvidenceReplayCacheService()
 
     async def build(
         self,
         parsed: ParsedHypothesis,
         literature_qc: LiteratureQC,
         preset_id: str | None,
+        session: Session | None = None,
     ) -> EvidencePack:
+        if self.settings.effective_evidence_mode == EvidenceMode.cached_live:
+            cached = self.replay_cache.load_evidence_pack(session, parsed.original_text)
+            if cached is None:
+                raise RuntimeError("No cached live evidence pack is available for this hypothesis yet.")
+            return cached
+
         context = SearchContext(parsed_hypothesis=parsed, preset_id=preset_id, stage="evidence_pack")
         recipe = self.router.evidence_recipe(parsed.domain_route)
         provider_trace = list(literature_qc.provider_trace)
@@ -29,8 +40,13 @@ class EvidencePackService:
         sources = list(literature_qc.literature_sources or literature_qc.references)
         checklists: list[EvidenceSource] = []
         used_seed_data = any(source.id.startswith("seed-") for source in sources)
+        force_seeded_hela = (
+            self.settings.effective_evidence_mode == EvidenceMode.seeded_demo
+            and parsed.domain_route == DomainRoute.cell_biology
+            and is_hela_trehalose_hypothesis(parsed.original_text, preset_id)
+        )
 
-        if self.settings.app_env != "test":
+        if self.settings.app_env != "test" and not force_seeded_hela:
             if parsed.domain_route == DomainRoute.cell_biology:
                 supplier_sources, supplier_trace, supplier_seeded = await self._build_hela_supplier_sources(context)
                 sources.extend(supplier_sources)
@@ -78,6 +94,19 @@ class EvidencePackService:
                 "seed-assumption-expert-review",
             })
             used_seed_data = True
+            provider_trace.append(
+                ProviderTraceEntry(
+                    provider="HeLa demo seed",
+                    attempted=True,
+                    succeeded=True,
+                    cached=False,
+                    stage="evidence_pack",
+                    fallback_used=True,
+                    query="seeded HeLa evidence pack",
+                    result_count=7,
+                )
+            )
+            searched_providers.append("HeLa demo seed")
 
         standards = standards_for_route(parsed, recipe.standards)
         if standards:
@@ -89,6 +118,8 @@ class EvidencePackService:
                     attempted=True,
                     succeeded=True,
                     cached=False,
+                    stage="evidence_pack",
+                    fallback_used=False,
                     query="static checklist",
                     result_count=1,
                 )
@@ -144,6 +175,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=url,
                         result_count=len(normalized),
                     )
@@ -163,6 +196,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=False,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=url,
                         result_count=0,
                         error=str(exc),
@@ -181,6 +216,8 @@ class EvidencePackService:
                     attempted=True,
                     succeeded=True,
                     cached=False,
+                    stage="evidence_pack",
+                    fallback_used=False,
                     query="Sigma trehalose product page",
                     result_count=len(results),
                 )
@@ -195,6 +232,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query="Sigma trehalose selected URLs",
                         result_count=len(normalized),
                     )
@@ -210,6 +249,8 @@ class EvidencePackService:
                     attempted=True,
                     succeeded=False,
                     cached=False,
+                    stage="evidence_pack",
+                    fallback_used=False,
                     query="Sigma trehalose product page",
                     result_count=0,
                     error=str(exc),
@@ -234,6 +275,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=len(search_results),
                     )
@@ -250,6 +293,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=len(normalized),
                     )
@@ -261,6 +306,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=False,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=0,
                         error=str(exc),
@@ -287,6 +334,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=len(result.sources),
                     )
@@ -298,6 +347,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=False,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=0,
                         error=str(exc),
@@ -322,6 +373,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=len(result.sources),
                     )
@@ -333,6 +386,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=False,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=0,
                         error=str(exc),
@@ -356,6 +411,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=True,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=len(sources),
                     )
@@ -370,6 +427,8 @@ class EvidencePackService:
                         attempted=True,
                         succeeded=False,
                         cached=False,
+                        stage="evidence_pack",
+                        fallback_used=False,
                         query=query,
                         result_count=0,
                         error=str(exc),
