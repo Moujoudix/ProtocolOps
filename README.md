@@ -33,6 +33,21 @@ The application follows one fixed pipeline:
 - [Submission notes](SUBMISSION_NOTES.md)
 - [Resource routing spec](RESOURCE_ROUTING.md)
 
+## Videos
+
+The demo and technical videos are available on the project video page:
+
+[Watch ProtocolOps videos](https://moujoudix.github.io/ProtocolOps/videos.html)
+
+Direct files are also available in the repository:
+
+- [Demo video: ProtocolOps user workflow](docs/videos/demo.mp4)
+- [Technical video: architecture and implementation](docs/videos/tech.mp4)
+
+The demo video shows the HeLa cryopreservation workflow: hypothesis input, Literature QC, EvidencePack-backed plan generation, materials and procurement checks, sources, and review/export actions.
+
+The technical video explains the FastAPI + React architecture, Consensus-first Literature QC, provider routing, OpenAI structured outputs, Pydantic guardrails, and strict-live/cached-live evidence modes.
+
 ## Diagrams
 
 PlantUML sources live under [docs/diagrams](docs/diagrams):
@@ -134,4 +149,3 @@ npm run build
 - Review memory is prompt-time retrieval of structured scientist corrections.
 - Formal fine-tuning is not implemented.
 - Catalog numbers and prices remain `null` unless directly retrieved from evidence sources.
-
