@@ -7,7 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str = "sqlite:///./data/ai_scientist.db"
-    frontend_origin: str = "http://localhost:5173"
+    backend_cors_allow_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    backend_cors_allow_origin_regex: str | None = None
 
     openai_api_key: str | None = None
     openai_parse_model: str = "gpt-5.4-mini"
@@ -26,8 +27,16 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @property
+    def cors_allow_origins(self) -> list[str]:
+        origins = []
+        for raw_origin in self.backend_cors_allow_origins.split(","):
+            origin = raw_origin.strip()
+            if origin:
+                origins.append(origin)
+        return origins
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
