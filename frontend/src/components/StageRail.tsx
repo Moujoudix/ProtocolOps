@@ -9,9 +9,9 @@ interface StageRailProps {
 }
 
 const stages = [
-  { id: "input", label: "Hypothesis", icon: ClipboardList },
-  { id: "qc", label: "Literature QC", icon: FileSearch },
-  { id: "plan", label: "Plan", icon: FlaskConical },
+  { id: "input", label: "Hypothesis", shortLabel: "Hypothesis", icon: ClipboardList },
+  { id: "qc", label: "Literature QC", shortLabel: "QC", icon: FileSearch },
+  { id: "plan", label: "Plan", shortLabel: "Plan", icon: FlaskConical },
 ] as const;
 
 export function StageRail({ active, hasQc, hasPlan }: StageRailProps) {
@@ -29,7 +29,8 @@ export function StageRail({ active, hasQc, hasPlan }: StageRailProps) {
             }`}
           >
             {complete ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <Icon className="h-4 w-4 shrink-0" />}
-            <span className="truncate">{stage.label}</span>
+            <span className="hidden truncate sm:inline">{stage.label}</span>
+            <span className="truncate sm:hidden">{stage.shortLabel}</span>
           </div>
         );
       })}

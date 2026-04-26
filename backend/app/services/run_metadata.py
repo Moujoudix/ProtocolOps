@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pydantic import ValidationError
 from sqlmodel import Session, select
 
 from app.models.db import PresentationAnchor, Run, RunRevision
@@ -10,8 +11,8 @@ def resolve_run_mode(run: Run) -> RunMode:
     if run.used_seed_data:
         return RunMode.demo_fallback
 
-    plan = model_from_json(ExperimentPlan, run.plan_json)
-    literature_qc = model_from_json(LiteratureQC, run.literature_qc_json)
+    plan = _safe_model_from_json(ExperimentPlan, run.plan_json)
+    literature_qc = _safe_model_from_json(LiteratureQC, run.literature_qc_json)
     provider_trace = (plan.literature_qc.provider_trace if plan else None) or (literature_qc.provider_trace if literature_qc else [])
 
     successful_providers = {entry.provider for entry in provider_trace if entry.succeeded}
@@ -99,3 +100,10 @@ def is_presentation_anchor(session: Session, run_id: str) -> bool:
 def set_presentation_anchor(session: Session, run_id: str) -> None:
     session.merge(PresentationAnchor(label="presentation", run_id=run_id))
     session.commit()
+
+
+def _safe_model_from_json(model, raw: str | None):
+    try:
+        return model_from_json(model, raw)
+    except ValidationError:
+        return None

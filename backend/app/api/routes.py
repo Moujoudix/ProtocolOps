@@ -3,6 +3,7 @@ import io
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import ValidationError
 from sqlmodel import Session, select
 
 from app.core.config import Settings, get_settings
@@ -72,9 +73,9 @@ def list_runs(session: Session = Depends(get_session)) -> list[RunListItem]:
     runs = session.exec(select(Run).order_by(Run.updated_at.desc())).all()
     items: list[RunListItem] = []
     for run in runs:
-        parsed = model_from_json(ParsedHypothesis, run.parsed_hypothesis_json)
-        plan = model_from_json(ExperimentPlan, run.plan_json)
-        quality_summary = model_from_json(PlanQualitySummary, run.quality_summary_json)
+        parsed = safe_model_from_json(ParsedHypothesis, run.parsed_hypothesis_json)
+        plan = safe_model_from_json(ExperimentPlan, run.plan_json)
+        quality_summary = safe_model_from_json(PlanQualitySummary, run.quality_summary_json)
         parent_revision = get_parent_revision(session, run.id)
         items.append(
             RunListItem(
@@ -451,3 +452,10 @@ def build_run_state_response(session: Session, run: Run) -> RunStateResponse:
         literature_qc=model_from_json(LiteratureQC, run.literature_qc_json),
         plan=model_from_json(ExperimentPlan, run.plan_json),
     )
+
+
+def safe_model_from_json(model: type, raw: str | None):
+    try:
+        return model_from_json(model, raw)
+    except ValidationError:
+        return None

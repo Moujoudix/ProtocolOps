@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 
 import pytest
@@ -148,6 +149,41 @@ def test_readiness_endpoint_reports_provider_statuses():
     assert {"OpenAI", "Consensus", "Tavily", "protocols.io", "Semantic Scholar"} <= provider_names
     semantic_scholar = next(provider for provider in payload["providers"] if provider["provider"] == "Semantic Scholar")
     assert semantic_scholar["status"] == "public_mode"
+
+
+def test_runs_endpoint_tolerates_legacy_parsed_hypothesis_payload():
+    run_id = f"legacy-run-{uuid4()}"
+    with Session(engine) as session:
+        run = Run(
+            id=run_id,
+            hypothesis="Legacy stored HeLa hypothesis.",
+            preset_id="hela-trehalose",
+            status="literature_qc_complete",
+            parsed_hypothesis_json=json.dumps(
+                {
+                    "original_text": "Legacy stored HeLa hypothesis.",
+                    "domain": "cell biology",
+                    "organism_or_system": "HeLa cells",
+                    "intervention": "trehalose",
+                    "comparator": "standard DMSO protocol",
+                    "outcome": "post-thaw viability",
+                    "effect_size": "15 percentage points",
+                    "mechanism": "membrane stabilization",
+                    "key_terms": ["HeLa", "trehalose", "cryopreservation"],
+                    "safety_notes": [],
+                }
+            ),
+        )
+        session.add(run)
+        session.commit()
+
+    client = TestClient(build_test_app())
+    response = client.get("/api/runs")
+
+    assert response.status_code == 200
+    payload = next(item for item in response.json() if item["run_id"] == run_id)
+    assert payload["domain"] == "cell biology"
+    assert payload["plan_title"] is None
 
 
 async def seed_completed_run(run_id: str) -> str:

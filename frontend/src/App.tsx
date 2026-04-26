@@ -14,9 +14,9 @@ import { LiteratureQcPanel } from "./components/LiteratureQcPanel";
 import { PlanTabs } from "./components/PlanTabs";
 import { StageRail } from "./components/StageRail";
 import {
+  fetchComparison,
   fetchPresets,
   fetchReadiness,
-  fetchComparison,
   fetchReviews,
   fetchRun,
   fetchRunEvents,
@@ -34,12 +34,12 @@ import type {
   ProviderReadiness,
   ReadinessResponse,
   RunComparisonResponse,
-  RunMode,
-  ReviewSessionRecord,
-  ReviewState,
   RunEventRecord,
   RunListItem,
+  RunMode,
   RunStateResponse,
+  ReviewSessionRecord,
+  ReviewState,
 } from "./types/api";
 
 type Stage = "input" | "qc" | "plan";
@@ -76,6 +76,8 @@ export default function App() {
     () => presets.find((preset) => preset.id === selectedPresetId) ?? null,
     [presets, selectedPresetId],
   );
+  const artifactStage = activeStage !== "input";
+  const hypothesisLocked = loading === "bootstrap" || loading === "opening";
 
   async function bootstrap() {
     setLoading("bootstrap");
@@ -341,11 +343,7 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-600">
             {readiness && (
               <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5">
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    readiness.live_ready ? "bg-emerald-500" : "bg-amber-500"
-                  }`}
-                />
+                <span className={`h-2 w-2 rounded-full ${readiness.live_ready ? "bg-emerald-500" : "bg-amber-500"}`} />
                 <span className="font-medium text-zinc-800">
                   {readiness.live_ready ? "Live ready" : "Presentation fallback ready"}
                 </span>
@@ -358,70 +356,44 @@ export default function App() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8 workspace-grid">
-        <aside className="space-y-4">
+      <div className={`mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8 workspace-grid ${artifactStage ? "workspace-grid-compact" : ""}`}>
+        <aside className={`space-y-4 ${artifactStage ? "hidden lg:block" : ""}`}>
           <StageRail active={activeStage} hasQc={Boolean(qcResponse)} hasPlan={Boolean(planResponse)} />
-
-          <section className="rounded-lg border border-zinc-200 bg-white p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold">Experiment setup</h2>
-                <p className="mt-1 text-sm leading-6 text-zinc-500">Choose an example hypothesis or edit the scientific question directly.</p>
-              </div>
-            </div>
-
-            <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor="preset">
-              Example hypotheses
-            </label>
-            <select
-              id="preset"
-              className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-emerald-200"
-              value={selectedPresetId ?? ""}
-              onChange={(event) => selectPreset(event.target.value)}
-              disabled={loading === "bootstrap" || loading === "opening"}
-            >
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-
-            <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor="hypothesis">
-              Natural-language hypothesis
-            </label>
-            <textarea
-              id="hypothesis"
-              className="mt-2 min-h-56 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-3 text-sm leading-6 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-emerald-200"
-              value={hypothesis}
-              onChange={(event) => {
-                setHypothesis(event.target.value);
-                resetToInput(event.target.value);
+          {artifactStage ? (
+            <ExperimentSetupDisclosure
+              selectedPreset={selectedPreset}
+              presets={presets}
+              selectedPresetId={selectedPresetId}
+              hypothesis={hypothesis}
+              hypothesisLocked={hypothesisLocked}
+              loading={loading}
+              qcReady={Boolean(qcResponse)}
+              onSelectPreset={selectPreset}
+              onHypothesisChange={(next) => {
+                setHypothesis(next);
+                resetToInput(next);
               }}
+              onRunQc={handleRunQc}
+              onGeneratePlan={handleGeneratePlan}
             />
-
-            <div className="mt-5 grid gap-3">
-              <button
-                type="button"
-                onClick={handleRunQc}
-                disabled={loading !== null || hypothesis.trim().length < 20}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
-              >
-                {loading === "qc" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                Run Literature QC
-              </button>
-              <button
-                type="button"
-                onClick={handleGeneratePlan}
-                disabled={loading !== null || !qcResponse}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400"
-              >
-                {loading === "plan" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                Generate Plan
-              </button>
-              {!qcResponse && <p className="text-xs text-zinc-500">Run Literature QC to unlock planning.</p>}
-            </div>
-          </section>
+          ) : (
+            <ExperimentSetupCard
+              selectedPreset={selectedPreset}
+              presets={presets}
+              selectedPresetId={selectedPresetId}
+              hypothesis={hypothesis}
+              hypothesisLocked={hypothesisLocked}
+              loading={loading}
+              qcReady={Boolean(qcResponse)}
+              onSelectPreset={selectPreset}
+              onHypothesisChange={(next) => {
+                setHypothesis(next);
+                resetToInput(next);
+              }}
+              onRunQc={handleRunQc}
+              onGeneratePlan={handleGeneratePlan}
+            />
+          )}
 
           <details className="rounded-lg border border-zinc-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
@@ -499,6 +471,37 @@ export default function App() {
         </aside>
 
         <section className="min-w-0 space-y-5">
+          {artifactStage && (
+            <div className="space-y-3 lg:hidden">
+              <StageRail active={activeStage} hasQc={Boolean(qcResponse)} hasPlan={Boolean(planResponse)} />
+              <ExperimentSetupDisclosure
+                selectedPreset={selectedPreset}
+                presets={presets}
+                selectedPresetId={selectedPresetId}
+                hypothesis={hypothesis}
+                hypothesisLocked={hypothesisLocked}
+                loading={loading}
+                qcReady={Boolean(qcResponse)}
+                onSelectPreset={selectPreset}
+                onHypothesisChange={(next) => {
+                  setHypothesis(next);
+                  resetToInput(next);
+                }}
+                onRunQc={handleRunQc}
+                onGeneratePlan={handleGeneratePlan}
+                mobile
+              />
+              {error && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+                  <div className="flex gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {loading && (
             <div className="rounded-lg border border-zinc-200 bg-white p-4">
               <div className="flex items-center gap-3">
@@ -510,6 +513,7 @@ export default function App() {
               </div>
             </div>
           )}
+
           {!qcResponse && !planResponse && (
             <div className="enter-up rounded-xl border border-zinc-200 bg-white px-6 py-7">
               <div className="max-w-4xl">
@@ -578,6 +582,137 @@ export default function App() {
   );
 }
 
+function ExperimentSetupCard(props: ExperimentSetupProps) {
+  return (
+    <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <div>
+        <h2 className="text-base font-semibold">Experiment setup</h2>
+        <p className="mt-1 text-sm leading-6 text-zinc-500">Choose an example hypothesis or edit the scientific question directly.</p>
+      </div>
+      <SetupControls {...props} className="mt-5" />
+    </section>
+  );
+}
+
+function ExperimentSetupDisclosure({
+  selectedPreset,
+  hypothesis,
+  mobile = false,
+  ...props
+}: ExperimentSetupProps & { mobile?: boolean }) {
+  return (
+    <details className="rounded-lg border border-zinc-200 bg-white" open={false}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
+        <div>
+          <p className="text-sm font-semibold text-zinc-950">Experiment setup</p>
+          <p className="mt-1 line-clamp-1 text-xs leading-5 text-zinc-500">
+            {selectedPreset?.label ?? "Custom hypothesis"} · {compactHypothesis(hypothesis, mobile ? 48 : 96)}
+          </p>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+      </summary>
+      <div className="border-t border-zinc-200 px-5 py-4">
+        <SetupControls
+          {...props}
+          selectedPreset={selectedPreset}
+          hypothesis={hypothesis}
+          compact
+        />
+      </div>
+    </details>
+  );
+}
+
+interface ExperimentSetupProps {
+  selectedPreset: Preset | null;
+  presets: Preset[];
+  selectedPresetId: string | null;
+  hypothesis: string;
+  hypothesisLocked: boolean;
+  loading: BusyState;
+  qcReady: boolean;
+  onSelectPreset: (presetId: string) => void;
+  onHypothesisChange: (value: string) => void;
+  onRunQc: () => void;
+  onGeneratePlan: () => void;
+}
+
+function SetupControls({
+  presets,
+  selectedPresetId,
+  hypothesis,
+  hypothesisLocked,
+  loading,
+  qcReady,
+  onSelectPreset,
+  onHypothesisChange,
+  onRunQc,
+  onGeneratePlan,
+  className = "",
+  compact = false,
+}: ExperimentSetupProps & { className?: string; compact?: boolean }) {
+  return (
+    <div className={className}>
+      <label className="block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor={compact ? "preset-compact" : "preset"}>
+        Example hypotheses
+      </label>
+      <select
+        id={compact ? "preset-compact" : "preset"}
+        className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-emerald-200"
+        value={selectedPresetId ?? ""}
+        onChange={(event) => onSelectPreset(event.target.value)}
+        disabled={hypothesisLocked}
+      >
+        {presets.map((preset) => (
+          <option key={preset.id} value={preset.id}>
+            {preset.label}
+          </option>
+        ))}
+      </select>
+
+      <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-zinc-500" htmlFor={compact ? "hypothesis-compact" : "hypothesis"}>
+        Natural-language hypothesis
+      </label>
+      <textarea
+        id={compact ? "hypothesis-compact" : "hypothesis"}
+        className={`mt-2 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-3 text-sm leading-6 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-emerald-200 ${compact ? "min-h-32" : "min-h-56"}`}
+        value={hypothesis}
+        onChange={(event) => onHypothesisChange(event.target.value)}
+      />
+
+      <div className="mt-5 grid gap-3">
+        <button
+          type="button"
+          onClick={onRunQc}
+          disabled={loading !== null || hypothesis.trim().length < 20}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+        >
+          {loading === "qc" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          Run Literature QC
+        </button>
+        <button
+          type="button"
+          onClick={onGeneratePlan}
+          disabled={loading !== null || !qcReady}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400"
+        >
+          {loading === "plan" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+          Generate Plan
+        </button>
+        {!qcReady && <p className="text-xs text-zinc-500">Run Literature QC to unlock planning.</p>}
+      </div>
+    </div>
+  );
+}
+
+function compactHypothesis(hypothesis: string, limit: number) {
+  const compacted = hypothesis.replace(/\s+/g, " ").trim();
+  if (compacted.length <= limit) {
+    return compacted;
+  }
+  return `${compacted.slice(0, limit - 1).trimEnd()}…`;
+}
+
 function ProviderStatusCard({ provider }: { provider: ProviderReadiness }) {
   const tone =
     provider.status === "ready" || provider.status === "public_mode"
@@ -630,15 +765,6 @@ function humanizeProviderStatus(status: ProviderReadiness["status"]) {
     degraded: "Degraded",
   };
   return labels[status];
-}
-
-function humanizeRunMode(runMode: RunMode) {
-  const labels: Record<RunMode, string> = {
-    fully_live: "fully live",
-    degraded_live: "degraded live",
-    demo_fallback: "demo fallback",
-  };
-  return labels[runMode];
 }
 
 function humanizeEvidenceMode(evidenceMode: EvidenceMode) {

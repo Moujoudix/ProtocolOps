@@ -283,7 +283,7 @@ describe("PlanTabs", () => {
     expect(screen.getAllByText("Supplier documentation").length).toBeGreaterThan(0);
     expect(screen.getAllByText("ATCC").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Evidence Pack").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Supports materials and supplier documentation/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Limitations").length).toBeGreaterThan(0);
     expect(screen.getByText(/ATCC HeLa cell stock/)).toBeInTheDocument();
     expect(screen.getAllByText(/Protocol step 1/).length).toBeGreaterThan(0);
   });
@@ -312,5 +312,19 @@ describe("PlanTabs", () => {
     expect(screen.getByText("Review memory applied")).toBeInTheDocument();
     expect(screen.getByText("Run timeline")).toBeInTheDocument();
     expect(screen.getAllByText("Cached live evidence").length).toBeGreaterThan(0);
+  });
+
+  it("keeps advanced review fields collapsed by default", async () => {
+    render(<PlanTabs plan={plan} parsedHypothesis={parsedHypothesis} runId="run-1" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(screen.getByText("Add structured detail")).toBeInTheDocument();
+    expect(screen.getByLabelText("Target type")).not.toBeVisible();
+
+    await userEvent.click(screen.getByText("Add structured detail"));
+
+    expect(await screen.findByLabelText("Target type")).toBeInTheDocument();
+    expect(screen.getByLabelText("Target key")).toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
@@ -21,6 +23,8 @@ class ReviewMemoryService:
         candidate_runs = session.exec(select(Run)).all()
         ranked_candidates: list[tuple[float, Run, ParsedHypothesis | None]] = []
         for run in candidate_runs:
+            if not has_generation_ready_parsed_hypothesis(run.parsed_hypothesis_json):
+                continue
             try:
                 run_parsed = model_from_json(ParsedHypothesis, run.parsed_hypothesis_json)
             except ValidationError:
@@ -30,8 +34,8 @@ class ReviewMemoryService:
                 continue
             ranked_candidates.append((score, run, run_parsed))
 
-        ranked_candidates.sort(key=lambda item: item[0], reverse=True)
-        candidate_runs = [item[1] for item in ranked_candidates[:24]]
+        ranked_candidates.sort(key=lambda item: (item[0], item[1].updated_at), reverse=True)
+        candidate_runs = [item[1] for item in ranked_candidates[:1]]
         run_ids = [run.id for run in candidate_runs]
         if not run_ids:
             return []
@@ -123,6 +127,28 @@ def review_session_score(review: ReviewSession) -> float:
     elif review.review_state == ReviewState.reviewed:
         score += 0.16
     return score
+
+
+def has_generation_ready_parsed_hypothesis(raw: str | None) -> bool:
+    if raw is None:
+        return False
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    required_fields = {
+        "domain_route",
+        "scientific_system",
+        "model_or_organism",
+        "outcome_metric",
+        "success_threshold",
+        "literature_query_terms",
+        "protocol_query_terms",
+        "supplier_material_query_terms",
+    }
+    return required_fields.issubset(payload.keys())
 
 
 def item_score(item: ReviewItem) -> float:

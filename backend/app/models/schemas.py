@@ -1,8 +1,9 @@
+import json
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 class StrictModel(BaseModel):
@@ -469,4 +470,101 @@ def now_utc() -> datetime:
 def model_from_json(model: type[BaseModel], raw: str | None) -> Any:
     if raw is None:
         return None
-    return model.model_validate_json(raw)
+    try:
+        return model.model_validate_json(raw)
+    except ValidationError:
+        if model is not ParsedHypothesis:
+            raise
+
+    payload = json.loads(raw)
+    if not isinstance(payload, dict):
+        return model.model_validate(payload)
+    return model.model_validate(_coerce_legacy_parsed_hypothesis(payload))
+
+
+def _coerce_legacy_parsed_hypothesis(payload: dict[str, Any]) -> dict[str, Any]:
+    domain = payload.get("domain") or "Scientific hypothesis"
+    scientific_system = payload.get("scientific_system")
+    model_or_organism = payload.get("model_or_organism") or payload.get("organism_or_system")
+    intervention = payload.get("intervention")
+    comparator = payload.get("comparator")
+    outcome_metric = payload.get("outcome_metric") or payload.get("outcome")
+    success_threshold = payload.get("success_threshold") or payload.get("effect_size")
+    mechanism = payload.get("mechanism")
+    literature_query_terms = _coerce_list(payload.get("literature_query_terms"))
+    protocol_query_terms = _coerce_list(payload.get("protocol_query_terms"))
+    supplier_material_query_terms = _coerce_list(payload.get("supplier_material_query_terms"))
+    key_terms = _coerce_list(payload.get("key_terms"))
+
+    if not literature_query_terms and key_terms:
+        literature_query_terms = key_terms[:6]
+
+    derived_key_terms = _dedupe_terms(
+        [
+            *literature_query_terms,
+            *protocol_query_terms,
+            *supplier_material_query_terms,
+            *key_terms,
+        ]
+    )
+
+    return {
+        **payload,
+        "domain_route": payload.get("domain_route") or _infer_legacy_domain_route(payload),
+        "scientific_system": scientific_system or domain,
+        "model_or_organism": model_or_organism,
+        "intervention": intervention,
+        "comparator": comparator,
+        "outcome_metric": outcome_metric,
+        "success_threshold": success_threshold,
+        "mechanism": mechanism,
+        "literature_query_terms": literature_query_terms,
+        "protocol_query_terms": protocol_query_terms,
+        "supplier_material_query_terms": supplier_material_query_terms,
+        "key_terms": derived_key_terms,
+        "safety_notes": _coerce_list(payload.get("safety_notes")),
+    }
+
+
+def _coerce_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return []
+
+
+def _dedupe_terms(values: list[str]) -> list[str]:
+    deduped: list[str] = []
+    for value in values:
+        cleaned = value.strip()
+        if cleaned and cleaned not in deduped:
+            deduped.append(cleaned)
+    return deduped[:12]
+
+
+def _infer_legacy_domain_route(payload: dict[str, Any]) -> DomainRoute:
+    hints = " ".join(
+        str(value)
+        for value in [
+            payload.get("domain"),
+            payload.get("original_text"),
+            payload.get("scientific_system"),
+            payload.get("organism_or_system"),
+            payload.get("model_or_organism"),
+            payload.get("intervention"),
+            payload.get("outcome"),
+            payload.get("mechanism"),
+        ]
+        if value
+    ).lower()
+
+    if any(token in hints for token in ["sporomusa", "bioelectrochemical", "electrosynthesis", "cathode", "co2", "acetate"]):
+        return DomainRoute.microbial_electrochemistry
+    if any(token in hints for token in ["crp", "biosensor", "diagnostic", "whole blood", "electrochemical"]):
+        return DomainRoute.diagnostics_biosensor
+    if any(token in hints for token in ["lactobacillus", "c57bl/6", "mouse", "mice", "fitc", "gut"]):
+        return DomainRoute.animal_gut_health
+    return DomainRoute.cell_biology

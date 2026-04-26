@@ -100,9 +100,16 @@ export function PlanTabs({
   const [anchorSubmitting, setAnchorSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showUtilities, setShowUtilities] = useState(false);
+  const [showAdvancedReview, setShowAdvancedReview] = useState(false);
 
   useEffect(() => setLocalReviews(reviews), [reviews]);
   useEffect(() => setLocalReviewState(reviewState), [reviewState]);
+  useEffect(() => {
+    if (utilityTabs.some((tab) => tab === activeTab)) {
+      setShowUtilities(true);
+    }
+  }, [activeTab]);
 
   const sourceById = useMemo(() => new Map(plan.sources.map((source) => [source.id, source])), [plan.sources]);
   const sourceUsage = useMemo(() => buildSourceUsage(plan), [plan]);
@@ -112,6 +119,21 @@ export function PlanTabs({
   const procurementCheckCount = countProcurementChecks(plan);
   const expertReviewFlagCount = countExpertReviewFlags(plan);
   const overallReadiness = plan.quality_summary ? `${Math.round(plan.quality_summary.operational_readiness * 100)}%` : "Not scored";
+  const topSummaryCards = [
+    { label: "Operational readiness", value: overallReadiness },
+    { label: "Sources", value: `${sourceCount}` },
+    { label: "Expert review", value: `${expertReviewFlagCount} flags` },
+    { label: "Procurement", value: `${procurementCheckCount} items` },
+  ];
+  const qualityStrip = plan.quality_summary
+    ? [
+        { label: "Literature", value: plan.quality_summary.literature_confidence },
+        { label: "Protocol", value: plan.quality_summary.protocol_confidence },
+        { label: "Materials", value: plan.quality_summary.materials_confidence },
+        { label: "Budget", value: plan.quality_summary.budget_confidence },
+        { label: "Evidence completeness", value: plan.quality_summary.evidence_completeness },
+      ]
+    : [];
 
   const providerOptions = useMemo(
     () => ["all", ...Array.from(new Set(plan.sources.map((source) => source.source_name)))],
@@ -234,8 +256,7 @@ export function PlanTabs({
       <div className="border-b border-zinc-200 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{plan.status_label}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950">{plan.plan_title}</h2>
+            <h2 className="text-2xl font-semibold tracking-normal text-zinc-950 sm:text-[2rem]">{plan.plan_title}</h2>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge tone={noveltyTone(plan.literature_qc.novelty_signal)}>{noveltyLabel}</Badge>
               <Badge tone={evidenceModeTone(evidenceMode)}>{humanizeEvidenceMode(evidenceMode)}</Badge>
@@ -245,12 +266,8 @@ export function PlanTabs({
               <span>
                 Operational readiness: <span className="font-medium text-zinc-800">{overallReadiness}</span>
               </span>
-              <span>
-                Review state: <span className="font-medium text-zinc-800">{humanizeReviewState(localReviewState)}</span>
-              </span>
-              <span>
-                Run mode: <span className="font-medium text-zinc-800">{humanizeRunMode(runMode)}</span>
-              </span>
+              <span>Review state: <span className="font-medium text-zinc-800">{humanizeReviewState(localReviewState)}</span></span>
+              <span>Run mode: <span className="font-medium text-zinc-800">{humanizeRunMode(runMode)}</span></span>
               {revisionNumber > 0 && <span>Revision {revisionNumber}</span>}
               {isPresentationAnchor && <span className="font-medium text-cyan-700">Presentation anchor</span>}
               {usedSeedData && <span className="font-medium text-amber-700">Seeded evidence used</span>}
@@ -285,7 +302,7 @@ export function PlanTabs({
                   type="button"
                   onClick={() => void handleMarkAnchor()}
                   disabled={!runId || anchorSubmitting}
-                  className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 hover:border-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400"
+                  className="hidden min-h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 hover:border-zinc-950 disabled:cursor-not-allowed disabled:text-zinc-400 sm:inline-flex"
                 >
                   <Star className="h-4 w-4" />
                   {isPresentationAnchor ? "Presentation anchor" : anchorSubmitting ? "Saving anchor..." : "Set anchor"}
@@ -295,17 +312,15 @@ export function PlanTabs({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <SummaryCard label="Novelty signal" value={noveltyLabel} />
-          <SummaryCard label="Operational readiness" value={overallReadiness} />
-          <SummaryCard label="Sources" value={`${sourceCount}`} />
-          <SummaryCard label="Expert review" value={`${expertReviewFlagCount} flags`} />
-          <SummaryCard label="Procurement" value={`${procurementCheckCount} items`} />
+        <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {topSummaryCards.map((card) => (
+            <SummaryCard key={card.label} label={card.label} value={card.value} />
+          ))}
         </div>
       </div>
 
       <div className="border-b border-zinc-200 px-4 py-3">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {primaryTabs.map((tab) => (
             <button
               key={tab}
@@ -319,43 +334,57 @@ export function PlanTabs({
             </button>
           ))}
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Utilities</span>
-          {utilityTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`min-h-9 shrink-0 rounded-md px-3 text-sm font-medium transition ${
-                activeTab === tab ? "bg-zinc-100 text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowUtilities((current) => !current)}
+            className="inline-flex min-h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900"
+          >
+            Planning utilities
+            <ChevronDown className={`h-4 w-4 text-zinc-400 transition ${showUtilities ? "rotate-180" : ""}`} />
+          </button>
+          {showUtilities && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {utilityTabs.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`min-h-9 shrink-0 rounded-md px-3 text-sm font-medium transition ${
+                    activeTab === tab ? "bg-zinc-100 text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="p-6">
         {activeTab === "Overview" && (
           <div className="space-y-6">
-            {plan.quality_summary && (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                <MetricCard label="Operational readiness" value={plan.quality_summary.operational_readiness} />
-                <MetricCard label="Literature confidence" value={plan.quality_summary.literature_confidence} />
-                <MetricCard label="Protocol confidence" value={plan.quality_summary.protocol_confidence} />
-                <MetricCard label="Materials confidence" value={plan.quality_summary.materials_confidence} />
-                <MetricCard label="Budget confidence" value={plan.quality_summary.budget_confidence} />
-                <MetricCard label="Evidence completeness" value={plan.quality_summary.evidence_completeness} />
+            {qualityStrip.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {qualityStrip.map((metric) => (
+                  <MetricChip key={metric.label} label={metric.label} value={metric.value} />
+                ))}
               </div>
             )}
             <SectionView section={plan.overview} sourceById={sourceById} onSelectSource={jumpToSource} />
             {(plan.memory_applied.length > 0 || runEvents.length > 0) && (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
                 {plan.memory_applied.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Review memory applied</p>
-                    <div className="mt-3 space-y-2">
+                  <details className="rounded-lg border border-zinc-200 bg-zinc-50" open={false}>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-950">Review memory applied</p>
+                        <p className="mt-1 text-xs text-zinc-500">Previously reviewed corrections that shaped this draft.</p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-zinc-400" />
+                    </summary>
+                    <div className="space-y-2 border-t border-zinc-200 px-4 py-4">
                       {plan.memory_applied.slice(0, 3).map((item) => (
                         <div key={`${item.review_session_id}-${item.target_key}`} className="rounded-lg bg-white p-3 text-sm text-zinc-800">
                           <p className="font-medium text-zinc-900">
@@ -365,16 +394,22 @@ export function PlanTabs({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </details>
                 )}
 
                 {runEvents.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                    <div className="flex items-center gap-2">
-                      <History className="h-4 w-4 text-zinc-500" />
-                      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Run timeline</p>
-                    </div>
-                    <div className="mt-3 space-y-2">
+                  <details className="rounded-lg border border-zinc-200 bg-zinc-50" open={false}>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <History className="h-4 w-4 text-zinc-500" />
+                        <div>
+                          <p className="text-sm font-semibold text-zinc-950">Run timeline</p>
+                          <p className="mt-1 text-xs text-zinc-500">Stage-level milestones recorded for this run.</p>
+                        </div>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-zinc-400" />
+                    </summary>
+                    <div className="space-y-2 border-t border-zinc-200 px-4 py-4">
                       {runEvents.slice(0, 4).map((event) => (
                         <div key={event.id} className="rounded-lg bg-white p-3 text-sm text-zinc-700">
                           <p className="font-medium text-zinc-900">{event.stage}</p>
@@ -382,7 +417,7 @@ export function PlanTabs({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </details>
                 )}
               </div>
             )}
@@ -451,6 +486,7 @@ export function PlanTabs({
             reviewComment={reviewComment}
             reviewReplacement={reviewReplacement}
             reviewConfidenceOverride={reviewConfidenceOverride}
+            showAdvancedReview={showAdvancedReview}
             submitting={reviewSubmitting}
             error={reviewError}
             onReviewerName={setReviewerName}
@@ -461,6 +497,7 @@ export function PlanTabs({
             onComment={setReviewComment}
             onReplacement={setReviewReplacement}
             onConfidenceOverride={setReviewConfidenceOverride}
+            onAdvancedReviewToggle={setShowAdvancedReview}
             onSubmit={handleSubmitReview}
             onRevise={handleRevise}
             revising={revisionSubmitting}
@@ -494,22 +531,20 @@ function fallbackParsedHypothesis(plan: ExperimentPlan): ParsedHypothesis {
   };
 }
 
-function MetricCard({ label, value }: { label: string; value: number }) {
+function MetricChip({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <ConfidenceBadge value={value} />
-      </div>
+    <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2">
+      <span className="text-xs font-medium text-zinc-600">{label}</span>
+      <ConfidenceBadge value={value} />
     </div>
   );
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-zinc-900">{value}</p>
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-zinc-950">{value}</p>
     </div>
   );
 }
@@ -733,7 +768,7 @@ function SourcesView({
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-4">
+      <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 md:grid-cols-[1fr_1fr_1fr_auto]">
         <FilterSelect label="Provider" value={providerFilter} onChange={onProviderFilter} options={providerOptions} />
         <FilterSelect label="Trust level" value={trustFilter} onChange={onTrustFilter} options={["all", "high", "medium", "low"]} />
         <FilterSelect
@@ -759,7 +794,7 @@ function SourcesView({
         sources.map((source) => (
           <article
             key={source.id}
-            className={`rounded-xl border p-5 ${selectedSourceId === source.id ? "border-emerald-300 bg-emerald-50/30" : "border-zinc-200"}`}
+            className={`rounded-xl border p-5 ${selectedSourceId === source.id ? "border-emerald-300 bg-emerald-50/20" : "border-zinc-200 bg-white"}`}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -770,24 +805,39 @@ function SourcesView({
               </div>
               <ConfidenceBadge value={source.confidence} />
             </div>
-            <p className="mt-2 text-sm leading-6 text-zinc-700">{source.snippet}</p>
-            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <p className="mt-3 text-sm leading-6 text-zinc-700">{source.snippet}</p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge tone={trustTierTone(source.trust_tier)}>{humanizeTrustTier(source.trust_tier)}</Badge>
+              <Badge tone={trustLevelTone(source.trust_level)}>{humanizeTrustLevel(source.trust_level)}</Badge>
+              <Badge tone={evidenceTone(source)}>{humanizeEvidenceClass(source)}</Badge>
+            </div>
+
+            <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2 xl:grid-cols-3">
               <MetaField label="Provider" value={source.source_name} />
-              <MetaField label="Trust level" value={humanizeTrustLevel(source.trust_level)} />
-              <MetaField label="Provenance" value={humanizeTrustTier(source.trust_tier)} />
-              <MetaField label="Evidence class" value={humanizeEvidenceClass(source)} />
               <MetaField label="Stage used in" value={sourceStage.get(source.id) ?? "Evidence Pack"} />
               <MetaField label="Used in sections" value={(sourceUsage.get(source.id) ?? ["Not referenced"]).join(", ")} />
-              <MetaField label="Confidence" value={`${Math.round(source.confidence * 100)}%`} />
+              <MetaField label="Evidence class" value={humanizeEvidenceClass(source)} />
+              <MetaField label="Trust level" value={humanizeTrustLevel(source.trust_level)} />
               <MetaField label="URL" value={source.url ?? "Not available"} />
-              <MetaField label="Limitations" value={sourceLimitations(source)} />
             </dl>
-            {source.url && (
-              <a className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700" href={source.url} target="_blank" rel="noreferrer">
-                Open source
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {source.url && (
+                <a className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700" href={source.url} target="_blank" rel="noreferrer">
+                  Open source
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+              {sourceHasInlineLimitation(source) ? (
+                <p className="text-sm text-amber-800">{sourceLimitations(source)}</p>
+              ) : (
+                <details className="text-sm text-zinc-600">
+                  <summary className="cursor-pointer list-none font-medium text-zinc-700">Limitations</summary>
+                  <p className="mt-2 leading-6 text-zinc-600">{sourceLimitations(source)}</p>
+                </details>
+              )}
+            </div>
           </article>
         ))
       )}
@@ -809,6 +859,7 @@ function ReviewView({
   reviewComment,
   reviewReplacement,
   reviewConfidenceOverride,
+  showAdvancedReview,
   submitting,
   error,
   onReviewerName,
@@ -819,6 +870,7 @@ function ReviewView({
   onComment,
   onReplacement,
   onConfidenceOverride,
+  onAdvancedReviewToggle,
   onSubmit,
   onRevise,
   revising,
@@ -836,6 +888,7 @@ function ReviewView({
   reviewComment: string;
   reviewReplacement: string;
   reviewConfidenceOverride: string;
+  showAdvancedReview: boolean;
   submitting: boolean;
   error: string | null;
   onReviewerName: (value: string) => void;
@@ -846,6 +899,7 @@ function ReviewView({
   onComment: (value: string) => void;
   onReplacement: (value: string) => void;
   onConfidenceOverride: (value: string) => void;
+  onAdvancedReviewToggle: (value: boolean) => void;
   onSubmit: () => Promise<void>;
   onRevise: () => Promise<void>;
   revising: boolean;
@@ -855,7 +909,6 @@ function ReviewView({
       <div className="rounded-md border border-zinc-200 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="amber">{humanizeReviewState(reviewState)}</Badge>
-          <Badge tone={runModeTone(runMode)}>{humanizeRunMode(runMode)}</Badge>
           <Badge>{reviews.length} review session{reviews.length === 1 ? "" : "s"}</Badge>
           {revisionNumber > 0 && <Badge>Revision {revisionNumber}</Badge>}
         </div>
@@ -863,35 +916,47 @@ function ReviewView({
         <p className="mt-2 text-sm leading-6 text-zinc-600">
           Capture expert corrections in structured form so similar future plans can reuse the same operational judgment.
         </p>
+        <p className="mt-2 text-sm text-zinc-500">
+          Start with one evidence-grounded note. Add targeting details only when you need to shape the revision more precisely.
+        </p>
 
         {!runId && <p className="mt-4 text-sm text-zinc-500">Generate a run before review can be submitted.</p>}
 
         <div className="mt-4 grid gap-3">
           <Input label="Reviewer name" value={reviewerName} onChange={onReviewerName} placeholder="Scientist or operator" />
-          <Input label="Review summary" value={reviewSummary} onChange={onReviewSummary} placeholder="What changed and why" />
-          <div className="grid gap-3 md:grid-cols-2">
-            <SelectField
-              label="Target type"
-              value={reviewTargetType}
-              onChange={(value) => onTargetType(value as ReviewSubmissionRequest["items"][number]["target_type"])}
-              options={["section", "protocol_step", "material", "budget_item", "timeline", "validation", "risk"]}
-            />
-            <SelectField
-              label="Action"
-              value={reviewAction}
-              onChange={(value) => onAction(value as ReviewSubmissionRequest["items"][number]["action"])}
-              options={["comment", "edit", "replace", "approve", "reject", "unrealistic", "missing_dependency"]}
-            />
-          </div>
-          <Input label="Target key" value={reviewTargetKey} onChange={onTargetKey} placeholder="overview, protocol.1, material:Trehalose" />
           <TextArea label="Review note" value={reviewComment} onChange={onComment} placeholder="Explain the scientific correction or operational concern." />
-          <TextArea label="Replacement text" value={reviewReplacement} onChange={onReplacement} placeholder="Optional corrected wording or parameter." />
-          <Input
-            label="Confidence override"
-            value={reviewConfidenceOverride}
-            onChange={onConfidenceOverride}
-            placeholder="0.0 to 1.0"
-          />
+          <details
+            className="rounded-lg border border-zinc-200 bg-zinc-50"
+            open={showAdvancedReview}
+            onToggle={(event) => onAdvancedReviewToggle((event.currentTarget as HTMLDetailsElement).open)}
+          >
+            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-zinc-800">Add structured detail</summary>
+            <div className="grid gap-3 border-t border-zinc-200 px-4 py-4">
+              <Input label="Review summary" value={reviewSummary} onChange={onReviewSummary} placeholder="What changed and why" />
+              <div className="grid gap-3 md:grid-cols-2">
+                <SelectField
+                  label="Target type"
+                  value={reviewTargetType}
+                  onChange={(value) => onTargetType(value as ReviewSubmissionRequest["items"][number]["target_type"])}
+                  options={["section", "protocol_step", "material", "budget_item", "timeline", "validation", "risk"]}
+                />
+                <SelectField
+                  label="Action"
+                  value={reviewAction}
+                  onChange={(value) => onAction(value as ReviewSubmissionRequest["items"][number]["action"])}
+                  options={["comment", "edit", "replace", "approve", "reject", "unrealistic", "missing_dependency"]}
+                />
+              </div>
+              <Input label="Target key" value={reviewTargetKey} onChange={onTargetKey} placeholder="overview, protocol.1, material:Trehalose" />
+              <TextArea label="Replacement text" value={reviewReplacement} onChange={onReplacement} placeholder="Optional corrected wording or parameter." />
+              <Input
+                label="Confidence override"
+                value={reviewConfidenceOverride}
+                onChange={onConfidenceOverride}
+                placeholder="0.0 to 1.0"
+              />
+            </div>
+          </details>
           {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</div>}
           <button
             type="button"
@@ -915,7 +980,16 @@ function ReviewView({
 
       <div className="space-y-4">
         {reviews.length === 0 ? (
-          <div className="rounded-md border border-zinc-200 p-4 text-sm text-zinc-500">No reviews have been recorded for this run yet.</div>
+          <div className="rounded-md border border-zinc-200 bg-zinc-50 p-5">
+            <p className="text-sm font-semibold text-zinc-950">No reviews recorded yet</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Submit one structured correction, then generate a revised plan to show the learning loop in action.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge tone={runModeTone(runMode)}>{humanizeRunMode(runMode)}</Badge>
+              <Badge>0 review sessions</Badge>
+            </div>
+          </div>
         ) : (
           reviews.map((review) => (
             <article key={review.id} className="rounded-md border border-zinc-200 p-4">
@@ -1176,6 +1250,10 @@ function sourceLimitations(source: EvidenceSource) {
     return "Checklist and safety guidance, not direct protocol-parameter evidence.";
   }
   return "Source-backed evidence with remaining domain-specific review as needed.";
+}
+
+function sourceHasInlineLimitation(source: EvidenceSource) {
+  return source.trust_tier === "inferred" || source.trust_tier === "community_protocol";
 }
 
 function humanizeReviewState(reviewState: ReviewState) {
